@@ -1,20 +1,17 @@
-# Learnings — ElastiCache Redis OSS EOS analysis (kong-terraform-aws, 2026-11-17)
+# Learnings: ElastiCache Redis OSS end-of-support analysis (kong-terraform-aws, 2026-11-17)
 
 ## What worked
-- One Terraform replication group (`redis.tf:1`) with its engine version resolved from the `var.redis_engine_version` default (`variables.tf:487`, "5.0.5"). There are no tfvars files.
-- Status came from the lifecycle docs: Redis OSS 5 is PAYING_NOW (Extended Support Year 1 since 2026-02-01).
+- One Terraform cache found: `aws_elasticache_replication_group.kong` (redis.tf:1) plus `aws_elasticache_parameter_group.kong` (redis.tf:29).
+- Engine and version resolved through variable defaults: `redis_engine_version = "5.0.5"` (variables.tf:487), `redis_family = "redis5.0"` (variables.tf:494).
+- Lifecycle status came from the documented schedule (Redis OSS 5 in Extended Support since 2026-02-01).
 
-## What failed / not done
-- Live access, AWS Health and Trusted Advisor were not used because `live_access=off`. Drift, the live version (probably 5.0.6) and unmanaged caches were not checked.
+## What failed or was not used, and why
+- Live data, AWS Health and Trusted Advisor were not read because the plan context set `live_access=off`. Drift was not checked.
 
-## Values not resolved
-- Region: comes from `data.aws_region.current`, so the cost estimate assumes us-east-1 pricing for cache.t2.small (~$0.034/hour).
-- Whether the cache is deployed: `enable_redis` defaults to false.
-- AWS provider version: not pinned.
-- Kong Redis client version: lua-resty-redis inside Kong, not in any manifest. No known minimum, so the client check passes.
-- Whether cache.t2.small is offered for Valkey 9 in the target Region.
-
-## Judgement calls
-- I scored automatic failover as off (+2) because `automatic_failover_enabled` is unset.
-- I scored "no staging environment" (+1) because this is a module that has `var.environment` but no staging configuration.
-- I did not count the CI pipeline: it only runs fmt/init on pull requests.
+## Values that could not be resolved
+- Actual deployed version: probably 5.0.6, because AWS upgraded 5.0.0 to 5.0.5 before Extended Support. Not confirmed.
+- Whether the cache is deployed at all: `enable_redis` defaults to false, and no tfvars are in the repository.
+- AWS provider version: there is no `required_providers` constraint. CI pins Terraform 0.12.13.
+- Region: not set in the module. The README example uses us-west-2. The cost estimate assumes about $0.034/hour for cache.t2.small.
+- Kong / lua-resty-redis client version: there is no client manifest in this repository.
+- Whether cache.t2.small is offered for Valkey in the Region.

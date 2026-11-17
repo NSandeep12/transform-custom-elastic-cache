@@ -9,45 +9,50 @@ th,td{padding:8px 10px;border-bottom:1px solid #eee;text-align:left;vertical-ali
 .rec{font-weight:700}.box{background:#fff;border:1px solid #eee;border-radius:10px;padding:14px;margin:14px 0}
 </style></head><body>
 <h1>ElastiCache upgrade plan · kong-terraform-aws · 2026-11-17</h1>
-<div class="box"><b>Summary:</b> 1 Redis OSS cache. 1 paying Extended Support now, 0 start paying in 76 days (Redis OSS 6 charges begin 2027-02-01). Estimated exposure: ~$40 per month (estimate; 2 x cache.t2.small, assumed us-east-1 on-demand, 80% Year 1 premium). Recommended: Valkey 9 (9.1) — blocked until a TLS decision is made, or choose Redis OSS 7.1.</div>
+<div class="box"><b>Summary:</b> 1 Redis OSS cache. 1 paying Extended Support now (if deployed), 0 start paying soon (Redis OSS 6 charges start in 76 days, on 2027-02-01). Estimated exposure: about $40 per month (estimate; 80% Year 1/Year 2 premium on 2 x cache.t2.small at an assumed $0.034/hour; about $79 per month in Year 3 from 2028-02-01). Recommended: Valkey 9 (9.1) for aws_elasticache_replication_group.kong.</div>
 <table>
 <tr><th>Cache</th><th>Defined in</th><th>Today</th><th>Lifecycle status (source)</th><th>Risk</th><th>Recommended</th><th>Why</th><th>Other options</th><th>Chosen</th></tr>
-<tr><td>aws_elasticache_replication_group.kong</td><td>variables.tf:487 (via redis.tf:8)</td><td>redis 5.0.5 <small>(declared; live probably 5.0.6)</small></td><td><span class="pill paying">PAYING_NOW</span> In Extended Support since 2026-02-01. Next price step 2027-02-01 (Year 2, same 80%); Year 3 at 160% from 2028-02-01. EOL 2029-01-31. <small>(docs)</small></td><td>Medium (3): automatic failover off +2 (redis.tf:1), no staging environment found +1 (variables.tf:121)</td><td class="rec">Valkey 9.1 (valkey-9)</td><td>Valkey is the AWS-recommended direction. The newest version gives the longest runway and your clients are compatible. (Rule 3)</td><td>
-<b>A Valkey 8.2</b> (valkey8): stops Extended Support, ~20% lower price, snapshot-only rollback.<br>
-<b>B Valkey 7.2</b> (valkey7): in-place rollback to Redis OSS 7.1; second change window later.<br>
-<b>C Redis OSS 7.1</b> (redis7): stops Extended Support, avoids the TLS blocker; no Valkey discount, no published end-of-support date.<br>
-<b>D Redis OSS 6.2</b>: not recommended; charges start 2027-02-01.</td><td>not chosen</td></tr>
+<tr><td>aws_elasticache_replication_group.kong<br><small>redis.tf:1, count = var.enable_redis ? 1 : 0 (default false)</small></td><td>variables.tf:487<br><small>engine at redis.tf:7, engine_version at redis.tf:8</small></td><td>redis 5.0.5<br><small>(declared; probably 5.0.6 live, unconfirmed)</small></td><td><span class="pill paying">PAYING_NOW</span> <small>(docs)</small><br><small>In Extended Support since 2026-02-01. Next price step 2027-02-01 (Year 2, still 80%). Year 3 from 2028-02-01 (160%). EOL 2029-01-31.</small></td><td>Medium (3)<br><small>Automatic failover / Multi-AZ off (+2, redis.tf:1); no staging environment found (+1)</small></td><td class="rec">Valkey 9.1 (valkey-9)</td><td>Valkey is the AWS-recommended direction. The newest version gives the longest runway and your clients are compatible. (rule 3)</td><td>
+<b>A, Valkey 8.2:</b> stops Extended Support, ~20% lower price, one upgrade, rollback by snapshot only.<br>
+<b>B, Valkey 7.2 then 8/9:</b> in-place rollback to Redis OSS 7.1 while you validate; second change window later.<br>
+<b>C, Redis OSS 7.1:</b> stays on Redis, stops Extended Support; no Valkey discount, end-of-support date not published.<br>
+<b>D, Redis OSS 6.2 (not recommended):</b> only postpones charges to 2027-02-01.</td><td>Not chosen</td></tr>
 </table>
-<div class="box"><b>Facts and sources:</b>
-<ul>
-<li>Engine <code>redis</code> — redis.tf:7 (repo)</li>
-<li>Version <code>5.0.5</code> — variables.tf:487 default of var.redis_engine_version, no tfvars (repo). AWS moved caches below 5.0.6 to 5.0.6 before Extended Support (docs).</li>
-<li>Node type <code>cache.t2.small</code> — variables.tf:480; node count 2 — variables.tf:501 (repo)</li>
-<li>Parameter group family <code>redis5.0</code> — variables.tf:494, no overrides (repo)</li>
-<li>Created only when <code>enable_redis = true</code> (default false, variables.tf:473) (repo)</li>
-<li>Lifecycle dates — https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/extended-support-versions.html (docs)</li>
-</ul></div>
-<div class="box"><b>Data sources:</b> repo, docs. Missing: live clusters, AWS Health and Trusted Advisor (live_access=off; no AWS API calls were made).</div>
-<div class="box"><b>Drift (live vs. code):</b> not checked (live data unavailable). Engine, version, parameter group and user engine drift is synced into the code; other drift is flagged only. If they can't be reconciled, the code is treated as the truth.</div>
-<div class="box"><b>Blockers:</b> aws_elasticache_replication_group.kong (redis.tf:1) has in-transit encryption off (<code>transit_encryption_enabled</code> not set). Valkey replication groups require it at creation; enabling TLS changes how Kong connects. Proposed manual change: enable TLS (<code>transit_encryption_mode = "preferred"</code> first, then <code>"required"</code>) and switch Kong's Redis connections to SSL, or choose Redis OSS 7.1.</div>
+<h2>Facts and sources</h2>
+<table>
+<tr><th>Fact</th><th>Value</th><th>Source</th></tr>
+<tr><td>Engine</td><td>redis</td><td>repo: redis.tf:7</td></tr>
+<tr><td>Engine version</td><td>5.0.5 (var.redis_engine_version default)</td><td>repo: variables.tf:487 (callers may override; no tfvars in repo)</td></tr>
+<tr><td>Parameter group family</td><td>redis5.0 (var.redis_family default), no custom parameters</td><td>repo: variables.tf:494, redis.tf:29-34</td></tr>
+<tr><td>Node type / count</td><td>cache.t2.small x 2</td><td>repo: variables.tf:480, variables.tf:501</td></tr>
+<tr><td>Automatic failover / Multi-AZ</td><td>Not set (off)</td><td>repo: redis.tf:1-27</td></tr>
+<tr><td>Encryption in transit / at rest</td><td>Not set (off)</td><td>repo: redis.tf:1-27</td></tr>
+<tr><td>Endpoint used by apps</td><td>Primary endpoint DNS via SSM parameter</td><td>repo: ssm.tf:88-95</td></tr>
+<tr><td>Redis OSS 5 lifecycle</td><td>Standard support ended 2026-01-31; ES Y1 2026-02-01, Y2 2027-02-01, Y3 2028-02-01; EOL 2029-01-31</td><td>docs: https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/extended-support-versions.html</td></tr>
+<tr><td>Newest Valkey</td><td>9.1 (not confirmed for the Region)</td><td>docs (confirm with DescribeCacheEngineVersions)</td></tr>
+</table>
+<div class="box"><b>Data sources:</b> repo, docs. Missing: live clusters, AWS Health and Trusted Advisor (live_access=off). Live data not available.</div>
+<div class="box"><b>Drift (live vs. code):</b> Not checked (live data not available). Engine, version, parameter group and user engine drift is synced into the code; other drift is flagged only. If they can't be reconciled, the code is treated as the truth.</div>
+<div class="box"><b>Blockers:</b> None. The resource is an aws_elasticache_replication_group (not a single-node aws_elasticache_cluster), no Global Datastore is defined, and the dialect is Terraform.</div>
 <div class="box"><b>Warnings:</b>
 <ul>
-<li>Region is not fixed in the code; the cost estimate assumes us-east-1.</li>
-<li>Confirm that cache.t2.small is supported for the chosen Valkey version in your Region.</li>
-<li>Automatic failover / Multi-AZ is off, so the upgrade interruption is longer than on a Multi-AZ group.</li>
-<li>AWS provider version is not pinned; pin a recent 5.x provider before the remediation.</li>
-<li>Moving to Redis OSS 6.x only postpones charges until 2027-02-01.</li>
+<li>transit_encryption_enabled is unset (redis.tf:1). Don't enable TLS automatically; decide and verify with <code>terraform plan</code>. Enabling TLS means Kong must connect with SSL.</li>
+<li>at_rest_encryption_enabled is unset (redis.tf:1). Provider default is false for redis and true for valkey. Run a real <code>terraform plan</code>; if it shows an encryption change or any -/+, set the attribute explicitly to the live value (false).</li>
+<li>Parameter group family redis5.0 (redis.tf:29) must change to the target family; the fixed name forces replacement of a group in use, so use a new name or create_before_destroy.</li>
+<li>AWS provider version is unconstrained (no required_providers block) and CI uses Terraform 0.12.13 (.github/workflows/terraform.yml:14). Confirm the caller's provider supports engine = "valkey".</li>
+<li>cache.t2.small (variables.tf:480) is previous generation; confirm it is offered for the target engine in the Region.</li>
+<li>The cache is created only when enable_redis=true (redis.tf:2); deployment state is unknown.</li>
+<li>Declared 5.0.5 is probably 5.0.6 live (AWS upgraded 5.0.0-5.0.5 before Extended Support); not confirmed.</li>
 </ul></div>
 <h2>What to change in your application</h2>
 <h3>aws_elasticache_replication_group.kong</h3>
 <table>
 <tr><th>Workload signal</th><th>Where</th><th>Impact</th><th>What to do</th></tr>
-<tr><td>Rate limiter / counters (Kong rate-limiting, redis policy)</td><td>README.md:29</td><td>Low. Counters kept; connections drop during failover.</td><td>Check the plugin's Redis timeout and fault tolerance; test against valkey/valkey:9; set the plugin's Redis SSL option if TLS is enabled.</td></tr>
-<tr><td>Caching via Redis</td><td>README.md:30</td><td>Low. Data kept; no warm-up.</td><td>Enable retries/backoff and reconnect.</td></tr>
-<tr><td>Primary endpoint DNS name published to SSM (no hard-coded IPs)</td><td>ssm.tf:92</td><td>None. Endpoint name is unchanged.</td><td>No change needed.</td></tr>
-<tr><td>RBAC and TLS: no rediss:// or TLS client settings</td><td>cloud-init.sh:196</td><td>Medium if a Valkey target is chosen.</td><td>Move Kong's Redis connections to TLS before requiring transit encryption.</td></tr>
+<tr><td>Rate limiter / counters (Kong rate-limiting, Redis policy)</td><td>variables.tf:468</td><td>Low. Counters are kept; connections drop during failover.</td><td>Confirm Kong reconnects and the plugin tolerates a short outage (fault_tolerant). No Lua scripts found in this repository.</td></tr>
+<tr><td>Cache-aside (caching)</td><td>README.md:29</td><td>Low.</td><td>Enable retries with backoff. No warm-up needed; data is kept.</td></tr>
+<tr><td>Endpoint by DNS name (no hard-coded IPs)</td><td>ssm.tf:92</td><td>None; endpoint DNS does not change.</td><td>None.</td></tr>
 </table>
 <div class="box"><b>Every workload:</b> node IPs change (use the endpoint name) · expect a failover of a few seconds (30-60 s below 5.0.6), so enable retries with backoff · detect Valkey with <code>server_name</code> / <code>valkey_version</code>, not <code>redis_version</code> · merge the code change before running the upgrade.</div>
-<div class="box"><b>Next step:</b> No target has been applied. Create a remediation from these findings and choose a target. If you don't choose one, the recommended target is used.</div>
+<div class="box"><b>Next step:</b> No target has been applied. Create a remediation from these findings and choose a target. If you don't choose one, the recommended target is used. Targets per cache: Valkey 9, Valkey 8, Valkey 7.2, Redis OSS 7.1.</div>
 <p style="font-size:12px;color:#666">Costs are estimates based on on-demand pricing; confirm on https://aws.amazon.com/elasticache/pricing/. No separate Redis or Valkey license fee applies on ElastiCache.</p>
 </body></html>
