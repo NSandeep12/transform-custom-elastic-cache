@@ -1,0 +1,154 @@
+{
+  "schema_version": "1",
+  "repo": "mattermost-cloud-monitoring",
+  "run_date": "2026-11-17",
+  "inputs": {
+    "engine_policy": "any",
+    "rollback_required": false,
+    "scope": "all",
+    "live_access": "off",
+    "regions": "from-iac"
+  },
+  "live_data": "unavailable",
+  "account": null,
+  "data_sources": {
+    "used": ["repo", "docs"],
+    "missing": [
+      {"source": "live", "reason": "live_access=off in the plan context; no describe calls were used"},
+      {"source": "health", "reason": "live_access=off; AWS Health events not read"},
+      {"source": "trusted_advisor", "reason": "live_access=off; Trusted Advisor checks not read"}
+    ]
+  },
+  "summary": {
+    "n_caches": 1,
+    "n_paying": 0,
+    "n_soon": 0,
+    "days_to_v6_charges": 76,
+    "est_monthly_extended_support_usd": "0 (estimate: the only cache resolves to Redis OSS 7.1, which is in standard support)",
+    "rec_summary": "1 cache: Valkey 9 (valkey-9, 9.1) recommended; currently Redis OSS 7.1 and supported, so the move is optional and for cost. Two blockers (single-node aws_elasticache_cluster, in-transit encryption unset) must be resolved before a Valkey upgrade."
+  },
+  "caches": [
+    {
+      "name": "aws_elasticache_cluster.redis_cluster",
+      "live_id": null,
+      "type": "aws_elasticache_cluster",
+      "dialect": "terraform",
+      "file": "aws/redis/main.tf",
+      "line": 17,
+      "engine": "redis",
+      "version": "7.1",
+      "version_source": {
+        "file": "aws/redis/variables.tf",
+        "line": 14,
+        "note": "engine_version = var.redis_version (main.tf:17); variable default \"7.1\" (variables.tf:14). The module is not called anywhere in this repository and no tfvars set redis_version, so a caller outside the repo could override it; the default is used."
+      },
+      "status": "SUPPORTED",
+      "status_text": "Supported. Optional: move to Valkey to cut cost.",
+      "status_source": "docs",
+      "risk": "Medium",
+      "risk_score": 3,
+      "risk_breakdown": [
+        {"signal": "Single-node cluster (aws_elasticache_cluster, num_cache_nodes default 1, no replication group / automatic failover)", "points": 2, "file": "aws/redis/main.tf", "line": 19},
+        {"signal": "No test or staging environment found (module has no callers or environment tfvars in the repository)", "points": 1, "file": "aws/redis/main.tf", "line": 14}
+      ],
+      "blockers": [
+        "single-node-cluster: aws_elasticache_cluster with no replication_group_id cannot cross-engine upgrade to Valkey; refactor into aws_elasticache_replication_group first (separate change), then rerun",
+        "transit-encryption-unset: transit_encryption_enabled is not set; a Valkey target needs in-transit encryption. Customer decides to enable TLS (TransitEncryptionMode preferred, then required) or choose Redis OSS 7.1"
+      ],
+      "recommended": "valkey-9",
+      "recommended_version": "9.1",
+      "recommendation_rule": 3,
+      "reason": "Valkey is the AWS-recommended direction. The newest version gives the longest runway and your clients are compatible.",
+      "alternatives": [
+        {"id": "A+", "target": "Valkey 9", "engine": "valkey", "family": "valkey9", "tradeoff": "Recommended. About 20% lower node-based price than Redis OSS, newest features, longest runway. Rollback by snapshot restore only."},
+        {"id": "A", "target": "Valkey 8", "engine": "valkey", "family": "valkey8", "tradeoff": "Same price benefit at the highest 8.x (8.2). One upgrade. Rollback by snapshot restore only."},
+        {"id": "B", "target": "Valkey 7.2 (step 1 of 2)", "engine": "valkey", "family": "valkey7", "tradeoff": "Keeps an in-place rollback to Redis OSS 7.1 while you validate; costs a second change window later."},
+        {"id": "C", "target": "Redis OSS 7.1", "engine": "redis", "family": "redis7", "tradeoff": "Current state; no change needed for support. No Valkey discount and no published end-of-support date. Avoids both blockers."},
+        {"id": "D", "target": "Redis OSS 6.x (not recommended)", "engine": "redis", "family": "redis6.x", "tradeoff": "Would be a downgrade from 7.1 and Extended Support charges start Feb 1, 2027. Not valid here."}
+      ],
+      "chosen": null,
+      "live_data": "unavailable",
+      "cost_estimate": {
+        "label": "estimate",
+        "basis": "Redis OSS 7.1 is in standard support, so no Extended Support premium applies. Default node type cache.t2.micro x 1 node (variables.tf:30, 36).",
+        "monthly_usd": "0",
+        "pricing_url": "https://aws.amazon.com/elasticache/pricing/"
+      },
+      "app_findings": []
+    }
+  ],
+  "other_resources": [
+    {"name": "aws_elasticache_subnet_group.redis_subnet_group", "file": "aws/redis/main.tf", "line": 5, "engine": null, "version": null, "note": "Subnet group used by redis_cluster; no engine. Unchanged by an engine upgrade."}
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "category": "end-of-support",
+      "severity": "Medium",
+      "file": "aws/redis/main.tf",
+      "line": 17,
+      "resource": "aws_elasticache_cluster.redis_cluster",
+      "title": "Redis OSS 7.1 cache is supported; Valkey 9 recommended for cost",
+      "description": "engine = \"redis\" (main.tf:16), engine_version = var.redis_version (main.tf:17), default \"7.1\" (variables.tf:14). Status from AWS docs: Supported. Optional: move to Valkey to cut cost. No Extended Support exposure (estimate: $0/month). Risk Medium (score 3: single node +2, no staging environment found +1). The module has no callers in this repository, so a caller-supplied redis_version could not be checked. Live data was not read (live_access=off).\n\nELASTICACHE_PLAN\ncache=aws_elasticache_cluster.redis_cluster\ndialect=terraform\ncurrent=redis 7.1\nstatus=SUPPORTED\nstatus_source=docs\nrisk=Medium\nrisk_score=3\nblockers=single-node-cluster,transit-encryption-unset\nrecommended=valkey-9\nrecommended_version=9.1\nreason=Valkey is the AWS-recommended direction. The newest version gives the longest runway and your clients are compatible.\nlive_data=unavailable\ndrift=none"
+    },
+    {
+      "id": "F2",
+      "category": "blocker",
+      "severity": "High",
+      "file": "aws/redis/main.tf",
+      "line": 14,
+      "resource": "aws_elasticache_cluster.redis_cluster",
+      "title": "Single-node aws_elasticache_cluster cannot cross-engine upgrade to Valkey",
+      "description": "aws_elasticache_cluster with engine redis and no replication_group_id. A single-node cluster can't be upgraded in place to Valkey. Proposed manual change: refactor into an aws_elasticache_replication_group (separate change, plan for replacement or migration of data), then rerun the analysis. Target C (stay on Redis OSS 7.1) needs no change."
+    },
+    {
+      "id": "F3",
+      "category": "blocker",
+      "severity": "High",
+      "file": "aws/redis/main.tf",
+      "line": 14,
+      "resource": "aws_elasticache_cluster.redis_cluster",
+      "title": "In-transit encryption is not set; Valkey target requires it",
+      "description": "transit_encryption_enabled is not set on the resource. A Valkey replication group requires in-transit encryption, and turning on TLS changes how every client connects. Don't set it automatically. The customer decides to enable TLS (TransitEncryptionMode preferred first, then required) as part of the replication-group refactor, or chooses Redis OSS 7.1 (target C)."
+    },
+    {
+      "id": "F4",
+      "category": "info",
+      "severity": "Low",
+      "file": ".",
+      "line": 1,
+      "resource": "live account",
+      "title": "Live data, AWS Health and Trusted Advisor not used",
+      "description": "live_access=off was set in the plan context. No live caches, parameter groups, Health events or Trusted Advisor checks were read. Status comes from AWS documentation and the repository. Drift was not checked. Unmanaged live caches, if any, are not reported."
+    },
+    {
+      "id": "F5",
+      "category": "info",
+      "severity": "Low",
+      "file": "aws/redis/variables.tf",
+      "line": 11,
+      "resource": "var.redis_version",
+      "title": "Module has no callers in this repository; effective version assumed from default",
+      "description": "aws/redis is a reusable module with no module block or tfvars in this repository that sets redis_version, instance_type or num_cache_nodes. Defaults are used (7.1, cache.t2.micro, 1 node). If a caller elsewhere sets redis_version to 4.x, 5.x or 6.x, that deployment would be in or near Extended Support (4/5: paying since 2026-02-01; 6: charges start 2027-02-01). Confirm the deployed values with the module callers."
+    },
+    {
+      "id": "F6",
+      "category": "info",
+      "severity": "Low",
+      "file": ".",
+      "line": 1,
+      "resource": "application code",
+      "title": "No application changes detected",
+      "description": "No Redis client libraries, Lua scripts, redis_version checks, hard-coded node IPs, docker-compose or Helm Redis images were found. The repository is infrastructure only. The general items still apply: node IPs change during an upgrade (use the endpoint DNS name), expect a short failover so clients should retry with backoff, detect Valkey with server_name / valkey_version rather than redis_version, and merge the code change before running the upgrade."
+    }
+  ],
+  "drift": [],
+  "warnings": [
+    "Live access was off: drift and unmanaged caches were not checked.",
+    "The effective redis_version depends on module callers outside this repository; the default 7.1 was used.",
+    "The default node type cache.t2.micro is a previous-generation type; confirm it is offered for the chosen Valkey version in the Region before upgrading (needs verification).",
+    "The Terraform AWS provider constraint is >= 5.70.0 (versions.tf:7); confirm the resolved provider supports engine = \"valkey\" for the chosen resource type.",
+    "Recommended version 9.1 comes from AWS documentation; confirm the newest Valkey 9.x in the Region with DescribeCacheEngineVersions."
+  ],
+  "next_step": "No target has been applied. Create a remediation from these findings and choose a target. If you don't choose one, the recommended target is used."
+}

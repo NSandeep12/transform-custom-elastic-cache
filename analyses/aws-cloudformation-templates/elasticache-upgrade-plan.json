@@ -1,0 +1,363 @@
+{
+  "schema_version": "1",
+  "repo": "aws-cloudformation-templates",
+  "run_date": "2026-11-17",
+  "inputs": {
+    "engine_policy": "any",
+    "rollback_required": false,
+    "scope": "all",
+    "live_access": "off",
+    "regions": "from-iac"
+  },
+  "live_data": "unavailable",
+  "account": null,
+  "data_sources": {
+    "used": [
+      "repo",
+      "docs"
+    ],
+    "missing": [
+      {
+        "source": "live",
+        "reason": "live_access=off"
+      },
+      {
+        "source": "health",
+        "reason": "live_access=off"
+      },
+      {
+        "source": "trusted_advisor",
+        "reason": "live_access=off"
+      }
+    ]
+  },
+  "summary": {
+    "n_caches": 2,
+    "n_paying": 0,
+    "n_soon": 0,
+    "days_to_v6_charges": 76,
+    "est_monthly_extended_support_usd": "$0 (estimate): the only Redis OSS version found, 2.8.24, is past end of life and not enrolled in Extended Support",
+    "rec_summary": "Valkey 9.1 for both RedisReplicationGroup definitions (YAML and JSON); blocked until in-transit encryption is decided"
+  },
+  "caches": [
+    {
+      "name": "RedisReplicationGroup (Elasticache-snapshot.yaml)",
+      "live_id": null,
+      "type": "AWS::ElastiCache::ReplicationGroup",
+      "dialect": "cloudformation",
+      "file": "ElastiCache/Elasticache-snapshot.yaml",
+      "line": 147,
+      "engine": "redis",
+      "version": "2.8.24",
+      "version_source": {
+        "file": "ElastiCache/Elasticache-snapshot.yaml",
+        "line": 147,
+        "note": "Literal EngineVersion: 2.8.24 (no parameter indirection). Parameter group family redis2.8 at line 117."
+      },
+      "status": "EOL",
+      "status_text": "Past end of life since 2023-01-13. Not eligible for Extended Support. AWS recommends 6.2 or higher. Confirm the Valkey upgrade path.",
+      "status_source": "docs",
+      "risk": "Medium",
+      "risk_score": 3,
+      "risk_breakdown": [
+        {
+          "signal": "Effective version 2.8.24 is older than 5.0.6",
+          "points": 2,
+          "file": "ElastiCache/Elasticache-snapshot.yaml",
+          "line": 147
+        },
+        {
+          "signal": "No test or staging environment found (single template, no environment parameter or separate stack)",
+          "points": 1,
+          "file": "ElastiCache/Elasticache-snapshot.yaml",
+          "line": 139
+        }
+      ],
+      "blockers": [
+        "transit-encryption-unset"
+      ],
+      "recommended": "valkey-9",
+      "recommended_version": "9.1",
+      "recommendation_rule": 3,
+      "reason": "Valkey is the AWS-recommended direction. The newest version gives the longest runway and your clients are compatible.",
+      "alternatives": [
+        {
+          "id": "A+",
+          "target": "Valkey 9 (9.1, recommended)",
+          "engine": "valkey",
+          "family": "valkey9",
+          "tradeoff": "Recommended. Stops running an unsupported engine, about 20% lower node price than Redis OSS, newest features. Rollback by snapshot restore only. Requires TransitEncryptionEnabled (blocker) and a confirmed upgrade path from 2.8.24."
+        },
+        {
+          "id": "A",
+          "target": "Valkey 8 (8.2)",
+          "engine": "valkey",
+          "family": "valkey8",
+          "tradeoff": "Same Valkey savings, one upgrade, highest 8.x. Rollback by snapshot restore only. Same TLS blocker and upgrade-path check."
+        },
+        {
+          "id": "B",
+          "target": "Valkey 7.2 (step 1 of 2)",
+          "engine": "valkey",
+          "family": "valkey7",
+          "tradeoff": "Keeps an in-place rollback to Redis OSS 7.1 while you validate; needs a second change window later. Same TLS blocker."
+        },
+        {
+          "id": "C",
+          "target": "Redis OSS 7.1",
+          "engine": "redis",
+          "family": "redis7",
+          "tradeoff": "Stays on Redis OSS, avoids the Valkey TLS requirement. No Valkey discount, no newer features, end-of-support date not yet published."
+        },
+        {
+          "id": "D",
+          "target": "Redis OSS 6.2 (not recommended)",
+          "engine": "redis",
+          "family": "redis6.x",
+          "tradeoff": "Not recommended. Only postpones the problem: Extended Support charges start Feb 1, 2027."
+        }
+      ],
+      "chosen": null,
+      "live_data": "unavailable",
+      "cost_estimate": {
+        "label": "estimate",
+        "basis": "Redis OSS 2.8 is past end of life and not enrolled in Extended Support, so no Extended Support charge is estimated. Node type cache.m3.medium x 2 (NumCacheClusters) per template parameters.",
+        "monthly_usd": null,
+        "pricing_url": "https://aws.amazon.com/elasticache/pricing/"
+      },
+      "app_findings": []
+    },
+    {
+      "name": "RedisReplicationGroup (Elasticache-snapshot.json)",
+      "live_id": null,
+      "type": "AWS::ElastiCache::ReplicationGroup",
+      "dialect": "cloudformation",
+      "file": "ElastiCache/Elasticache-snapshot.json",
+      "line": 218,
+      "engine": "redis",
+      "version": "2.8.24",
+      "version_source": {
+        "file": "ElastiCache/Elasticache-snapshot.json",
+        "line": 218,
+        "note": "Literal EngineVersion: 2.8.24 (no parameter indirection). Parameter group family redis2.8 at line 169."
+      },
+      "status": "EOL",
+      "status_text": "Past end of life since 2023-01-13. Not eligible for Extended Support. AWS recommends 6.2 or higher. Confirm the Valkey upgrade path.",
+      "status_source": "docs",
+      "risk": "Medium",
+      "risk_score": 3,
+      "risk_breakdown": [
+        {
+          "signal": "Effective version 2.8.24 is older than 5.0.6",
+          "points": 2,
+          "file": "ElastiCache/Elasticache-snapshot.json",
+          "line": 218
+        },
+        {
+          "signal": "No test or staging environment found (single template, no environment parameter or separate stack)",
+          "points": 1,
+          "file": "ElastiCache/Elasticache-snapshot.json",
+          "line": 204
+        }
+      ],
+      "blockers": [
+        "transit-encryption-unset"
+      ],
+      "recommended": "valkey-9",
+      "recommended_version": "9.1",
+      "recommendation_rule": 3,
+      "reason": "Valkey is the AWS-recommended direction. The newest version gives the longest runway and your clients are compatible.",
+      "alternatives": [
+        {
+          "id": "A+",
+          "target": "Valkey 9 (9.1, recommended)",
+          "engine": "valkey",
+          "family": "valkey9",
+          "tradeoff": "Recommended. Stops running an unsupported engine, about 20% lower node price than Redis OSS, newest features. Rollback by snapshot restore only. Requires TransitEncryptionEnabled (blocker) and a confirmed upgrade path from 2.8.24."
+        },
+        {
+          "id": "A",
+          "target": "Valkey 8 (8.2)",
+          "engine": "valkey",
+          "family": "valkey8",
+          "tradeoff": "Same Valkey savings, one upgrade, highest 8.x. Rollback by snapshot restore only. Same TLS blocker and upgrade-path check."
+        },
+        {
+          "id": "B",
+          "target": "Valkey 7.2 (step 1 of 2)",
+          "engine": "valkey",
+          "family": "valkey7",
+          "tradeoff": "Keeps an in-place rollback to Redis OSS 7.1 while you validate; needs a second change window later. Same TLS blocker."
+        },
+        {
+          "id": "C",
+          "target": "Redis OSS 7.1",
+          "engine": "redis",
+          "family": "redis7",
+          "tradeoff": "Stays on Redis OSS, avoids the Valkey TLS requirement. No Valkey discount, no newer features, end-of-support date not yet published."
+        },
+        {
+          "id": "D",
+          "target": "Redis OSS 6.2 (not recommended)",
+          "engine": "redis",
+          "family": "redis6.x",
+          "tradeoff": "Not recommended. Only postpones the problem: Extended Support charges start Feb 1, 2027."
+        }
+      ],
+      "chosen": null,
+      "live_data": "unavailable",
+      "cost_estimate": {
+        "label": "estimate",
+        "basis": "Redis OSS 2.8 is past end of life and not enrolled in Extended Support, so no Extended Support charge is estimated. Node type cache.m3.medium x 2 (NumCacheClusters) per template parameters.",
+        "monthly_usd": null,
+        "pricing_url": "https://aws.amazon.com/elasticache/pricing/"
+      },
+      "app_findings": []
+    }
+  ],
+  "other_resources": [
+    {
+      "name": "RedisParameterGroup",
+      "file": "ElastiCache/Elasticache-snapshot.yaml",
+      "line": 115,
+      "engine": "redis",
+      "version": "redis2.8 (family)",
+      "note": "Parameter group attached to RedisReplicationGroup; replaced with target family on remediation."
+    },
+    {
+      "name": "RedisParameterGroup",
+      "file": "ElastiCache/Elasticache-snapshot.json",
+      "line": 167,
+      "engine": "redis",
+      "version": "redis2.8 (family)",
+      "note": "Parameter group attached to RedisReplicationGroup; replaced with target family on remediation."
+    },
+    {
+      "name": "RedisSubnetGroup",
+      "file": "ElastiCache/Elasticache-snapshot.yaml",
+      "line": 121,
+      "engine": null,
+      "version": null,
+      "note": "Engine-independent subnet group; no change."
+    },
+    {
+      "name": "RedisSubnetGroup",
+      "file": "ElastiCache/Elasticache-snapshot.json",
+      "line": 174,
+      "engine": null,
+      "version": null,
+      "note": "Engine-independent subnet group; no change."
+    }
+  ],
+  "findings": [
+    {
+      "id": "EC-001",
+      "category": "end-of-support",
+      "severity": "High",
+      "file": "ElastiCache/Elasticache-snapshot.yaml",
+      "line": 147,
+      "resource": "RedisReplicationGroup (Elasticache-snapshot.yaml)",
+      "title": "Redis OSS 2.8.24 is past end of life",
+      "description": "RedisReplicationGroup (Elasticache-snapshot.yaml) runs engine redis, EngineVersion 2.8.24 (ElastiCache/Elasticache-snapshot.yaml:147), parameter group family redis2.8 (ElastiCache/Elasticache-snapshot.yaml:117). Past end of life since 2023-01-13. Not eligible for Extended Support. AWS recommends 6.2 or higher. Confirm the Valkey upgrade path. Redis OSS 2.x is not enrolled in Extended Support, so it is not paying Extended Support; it receives no fixes or security patches. The AWS docs do not state whether a direct cross-engine upgrade from 2.8.24 to Valkey is allowed: confirm with describe-cache-engine-versions or AWS Support before planning a single-step upgrade. Upgrades from versions older than 5.0.6 pause writes for 30-60 seconds. Risk score 3 (Medium): version older than 5.0.6 (+2), no test or staging environment found (+1). Topology: NumCacheClusters 2 with AutomaticFailoverEnabled true (no single-node penalty). Recommended: Valkey 9.1 (rule 3, no Redis client code in the repository fails the client check). Alternatives: Valkey 8.2, Valkey 7.2 (in-place rollback to Redis OSS 7.1), Redis OSS 7.1 (avoids the Valkey TLS requirement). Never Redis OSS 6.x. Parameter group family must move to valkey9 (or the chosen target family).\nELASTICACHE_PLAN\ncache=RedisReplicationGroup (Elasticache-snapshot.yaml)\ndialect=cloudformation\ncurrent=redis 2.8.24\nstatus=EOL\nstatus_source=docs\nrisk=Medium\nrisk_score=3\nblockers=transit-encryption-unset\nrecommended=valkey-9\nrecommended_version=9.1\nreason=Valkey is the AWS-recommended direction. The newest version gives the longest runway and your clients are compatible.\nlive_data=unavailable\ndrift=none"
+    },
+    {
+      "id": "EC-002",
+      "category": "blocker",
+      "severity": "High",
+      "file": "ElastiCache/Elasticache-snapshot.yaml",
+      "line": 139,
+      "resource": "RedisReplicationGroup (Elasticache-snapshot.yaml)",
+      "title": "In-transit encryption is not set (required for a Valkey replication group)",
+      "description": "RedisReplicationGroup (Elasticache-snapshot.yaml) does not set TransitEncryptionEnabled. The CloudFormation docs require TransitEncryptionEnabled when creating a Valkey replication group and cfn-lint rejects a Valkey replication group without it. Turning on TLS changes how every client connects. Proposed manual change: enable TLS (TransitEncryptionMode: preferred first, then required) and move clients to TLS, or choose Redis OSS 7.1 (target C). Not changed automatically."
+    },
+    {
+      "id": "EC-003",
+      "category": "end-of-support",
+      "severity": "High",
+      "file": "ElastiCache/Elasticache-snapshot.json",
+      "line": 218,
+      "resource": "RedisReplicationGroup (Elasticache-snapshot.json)",
+      "title": "Redis OSS 2.8.24 is past end of life",
+      "description": "RedisReplicationGroup (Elasticache-snapshot.json) runs engine redis, EngineVersion 2.8.24 (ElastiCache/Elasticache-snapshot.json:218), parameter group family redis2.8 (ElastiCache/Elasticache-snapshot.json:169). Past end of life since 2023-01-13. Not eligible for Extended Support. AWS recommends 6.2 or higher. Confirm the Valkey upgrade path. Redis OSS 2.x is not enrolled in Extended Support, so it is not paying Extended Support; it receives no fixes or security patches. The AWS docs do not state whether a direct cross-engine upgrade from 2.8.24 to Valkey is allowed: confirm with describe-cache-engine-versions or AWS Support before planning a single-step upgrade. Upgrades from versions older than 5.0.6 pause writes for 30-60 seconds. Risk score 3 (Medium): version older than 5.0.6 (+2), no test or staging environment found (+1). Topology: NumCacheClusters 2 with AutomaticFailoverEnabled true (no single-node penalty). Recommended: Valkey 9.1 (rule 3, no Redis client code in the repository fails the client check). Alternatives: Valkey 8.2, Valkey 7.2 (in-place rollback to Redis OSS 7.1), Redis OSS 7.1 (avoids the Valkey TLS requirement). Never Redis OSS 6.x. Parameter group family must move to valkey9 (or the chosen target family).\nELASTICACHE_PLAN\ncache=RedisReplicationGroup (Elasticache-snapshot.json)\ndialect=cloudformation\ncurrent=redis 2.8.24\nstatus=EOL\nstatus_source=docs\nrisk=Medium\nrisk_score=3\nblockers=transit-encryption-unset\nrecommended=valkey-9\nrecommended_version=9.1\nreason=Valkey is the AWS-recommended direction. The newest version gives the longest runway and your clients are compatible.\nlive_data=unavailable\ndrift=none"
+    },
+    {
+      "id": "EC-004",
+      "category": "blocker",
+      "severity": "High",
+      "file": "ElastiCache/Elasticache-snapshot.json",
+      "line": 204,
+      "resource": "RedisReplicationGroup (Elasticache-snapshot.json)",
+      "title": "In-transit encryption is not set (required for a Valkey replication group)",
+      "description": "RedisReplicationGroup (Elasticache-snapshot.json) does not set TransitEncryptionEnabled. The CloudFormation docs require TransitEncryptionEnabled when creating a Valkey replication group and cfn-lint rejects a Valkey replication group without it. Turning on TLS changes how every client connects. Proposed manual change: enable TLS (TransitEncryptionMode: preferred first, then required) and move clients to TLS, or choose Redis OSS 7.1 (target C). Not changed automatically."
+    },
+    {
+      "id": "EC-005",
+      "category": "info",
+      "severity": "Low",
+      "file": "ElastiCache/Elasticache-snapshot.yaml",
+      "line": 115,
+      "resource": "RedisParameterGroup (AWS::ElastiCache::ParameterGroup)",
+      "title": "Parameter group uses family redis2.8",
+      "description": "Custom parameter group with CacheParameterGroupFamily redis2.8 and no explicit Parameters (no non-default static values to carry over). It is attached to RedisReplicationGroup and must be replaced with a group of the target family (for example valkey9) during remediation."
+    },
+    {
+      "id": "EC-006",
+      "category": "info",
+      "severity": "Low",
+      "file": "ElastiCache/Elasticache-snapshot.json",
+      "line": 167,
+      "resource": "RedisParameterGroup (AWS::ElastiCache::ParameterGroup)",
+      "title": "Parameter group uses family redis2.8",
+      "description": "Custom parameter group with CacheParameterGroupFamily redis2.8 and no explicit Parameters (no non-default static values to carry over). It is attached to RedisReplicationGroup and must be replaced with a group of the target family (for example valkey9) during remediation."
+    },
+    {
+      "id": "EC-007",
+      "category": "info",
+      "severity": "Low",
+      "file": "ElastiCache/Elasticache-snapshot.yaml",
+      "line": 121,
+      "resource": "RedisSubnetGroup (AWS::ElastiCache::SubnetGroup)",
+      "title": "Subnet group is not affected by the engine change",
+      "description": "AWS::ElastiCache::SubnetGroup is engine-independent. No change needed for the upgrade."
+    },
+    {
+      "id": "EC-008",
+      "category": "info",
+      "severity": "Low",
+      "file": "ElastiCache/Elasticache-snapshot.json",
+      "line": 174,
+      "resource": "RedisSubnetGroup (AWS::ElastiCache::SubnetGroup)",
+      "title": "Subnet group is not affected by the engine change",
+      "description": "AWS::ElastiCache::SubnetGroup is engine-independent. No change needed for the upgrade."
+    },
+    {
+      "id": "EC-009",
+      "category": "info",
+      "severity": "Low",
+      "file": ".",
+      "line": 1,
+      "resource": "live data",
+      "title": "Live data, AWS Health and Trusted Advisor not used (live_access=off)",
+      "description": "live_access=off was set, so no AWS API was called: no caller identity, AWS Health events, Trusted Advisor checks, live clusters or DescribeCacheEngineVersions were read. Status is computed from AWS documentation and the run date; drift was not checked; target versions (Valkey 9.1, 8.2) come from the AWS docs and must be confirmed in the Region. live_data=unavailable is set in every plan block."
+    },
+    {
+      "id": "EC-010",
+      "category": "info",
+      "severity": "Low",
+      "file": ".",
+      "line": 1,
+      "resource": "application code",
+      "title": "No Redis client application code found",
+      "description": "No Redis client library or Redis command usage was found (no package manifests with Redis clients, no docker-compose/Helm Redis images, no Lua, INFO parsing or hard-coded node IPs). ElastiCache/elastic-code.js is a CloudFormation custom resource that calls the ElastiCache control-plane API (ModifyReplicationGroup) through aws-sdk; it does not connect to Redis and is not affected by the engine change. Consumers of this template outside the repository were not visible."
+    }
+  ],
+  "drift": [],
+  "warnings": [
+    "Redis OSS 2.8.24 is past end of life (2023-01-13); the direct upgrade path from 2.8.24 to Valkey is not stated in the AWS docs. Confirm with describe-cache-engine-versions or AWS Support.",
+    "Node type cache.m3.medium (previous generation) is fixed by the RedisNodeType AllowedValues list. Confirm that the chosen target engine/version supports this node type in your Region; changing the node type is a separate change.",
+    "Elasticache-snapshot.yaml and Elasticache-snapshot.json define the same stack in two formats; each is reported separately and both must be changed together in a remediation.",
+    "Live access was off: no drift check, no Health/Trusted Advisor data, and target versions were not confirmed with DescribeCacheEngineVersions.",
+    "Costs are estimates; confirm on https://aws.amazon.com/elasticache/pricing/."
+  ],
+  "next_step": "No target has been applied. Create a remediation from these findings and choose a target. If you don't choose one, the recommended target is used."
+}

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>ElastiCache upgrade plan</title>
+<style>
+body{font-family:-apple-system,Segoe UI,Arial,sans-serif;max-width:1100px;margin:24px auto;padding:0 16px;color:#1a1a1a;background:#faf9fc}
+h1{font-size:24px}table{width:100%;border-collapse:collapse;background:#fff;font-size:14px}
+th,td{padding:8px 10px;border-bottom:1px solid #eee;text-align:left;vertical-align:top}th{background:#f6f6f8}
+.pill{padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600}
+.paying{background:#fde2e2;color:#b91c1c}.soon{background:#fdf0d5;color:#92400e}.ok{background:#dcfce7;color:#166534}
+.rec{font-weight:700}.box{background:#fff;border:1px solid #eee;border-radius:10px;padding:14px;margin:14px 0}
+</style></head><body>
+<h1>ElastiCache upgrade plan · mattermost-cloud-monitoring · 2026-11-17</h1>
+<div class="box"><b>Summary:</b> 1 Redis OSS cache. 0 paying Extended Support now, 0 start paying in 76 days (Redis OSS 6 charges start Feb 1, 2027). Estimated exposure: $0 per month (estimate). Recommended: Valkey 9 (9.1) for the one cache, an optional cost move because Redis OSS 7.1 is still supported. Two blockers must be resolved before a Valkey upgrade.</div>
+<table>
+<tr><th>Cache</th><th>Defined in</th><th>Today</th><th>Lifecycle status (source)</th><th>Risk</th><th>Recommended</th><th>Why</th><th>Other options</th><th>Chosen</th></tr>
+<tr><td>aws_elasticache_cluster.redis_cluster</td><td>aws/redis/main.tf:17<br><small>version default at aws/redis/variables.tf:14 (repo)</small></td><td>redis 7.1</td><td><span class="pill ok">SUPPORTED: Supported. Optional: move to Valkey to cut cost.</span> <small>(docs)</small></td><td>Medium (3): single node +2 (main.tf:19), no staging environment found +1</td><td class="rec">valkey-9 (9.1)</td><td>Valkey is the AWS-recommended direction. The newest version gives the longest runway and your clients are compatible. (Rule 3)</td><td>
+<b>A Valkey 8 (8.2):</b> same price benefit, highest 8.x, rollback by snapshot only.<br>
+<b>B Valkey 7.2:</b> keeps an in-place rollback to Redis OSS 7.1; a second change window later.<br>
+<b>C Redis OSS 7.1:</b> current state, no change needed for support; no Valkey discount, no published end-of-support date; avoids both blockers.<br>
+<b>D Redis OSS 6.x:</b> not recommended; would be a downgrade, and charges start Feb 1, 2027.</td><td>none</td></tr>
+</table>
+<div class="box"><b>Data sources:</b> repository (IaC, CI, manifests), AWS documentation (lifecycle dates, target versions). Missing: live clusters, AWS Health and Trusted Advisor were not read because live_access=off was set. All plan blocks have live_data=unavailable.</div>
+<div class="box"><b>Drift (live vs. code):</b> not checked, because live data was unavailable. Engine, version, parameter group and user engine drift is synced into the code; other drift is flagged only. If they can't be reconciled, the code is treated as the truth.</div>
+<div class="box"><b>Blockers:</b>
+<ul>
+<li><b>Single-node cluster</b> (aws/redis/main.tf:14): <code>aws_elasticache_cluster</code> with no <code>replication_group_id</code> can't cross-engine upgrade to Valkey. Manual change: refactor into <code>aws_elasticache_replication_group</code> as a separate change, then rerun.</li>
+<li><b>In-transit encryption unset</b> (aws/redis/main.tf:14): Valkey requires <code>transit_encryption_enabled</code>. Turning on TLS changes how clients connect. You decide: enable TLS (mode <code>preferred</code> first, then <code>required</code>), or choose Redis OSS 7.1 (target C).</li>
+</ul></div>
+<div class="box"><b>Warnings:</b>
+<ul>
+<li>The module <code>aws/redis</code> has no callers or tfvars in this repository, so the variable defaults were used (7.1, cache.t2.micro, 1 node) (aws/redis/variables.tf:11). A caller that sets <code>redis_version</code> to 4.x, 5.x or 6.x would be in, or near, Extended Support. Confirm the values that are actually deployed.</li>
+<li>cache.t2.micro is a previous-generation node type. Confirm it is offered for the chosen Valkey version in your Region (needs verification).</li>
+<li>The provider constraint is <code>&gt;= 5.70.0</code> (aws/redis/versions.tf:7). Confirm that the resolved provider supports <code>engine = "valkey"</code>.</li>
+<li>Version 9.1 comes from AWS documentation. Confirm the newest 9.x in your Region with DescribeCacheEngineVersions.</li>
+</ul></div>
+<h2>What to change in your application</h2>
+<h3>aws_elasticache_cluster.redis_cluster</h3>
+<table>
+<tr><th>Workload signal</th><th>Where</th><th>Impact</th><th>What to do</th></tr>
+<tr><td colspan="4">No application changes detected. This repository is infrastructure only: no Redis clients, Lua scripts, version checks, hard-coded IPs or Redis dev images were found. Applications that use this cache live in other repositories. Check them against the items below. If you enable TLS, they must connect with <code>rediss://</code>.</td></tr>
+</table>
+<div class="box"><b>Every workload:</b> node IPs change (use the endpoint name) · expect a failover of a few seconds (30-60 s below 5.0.6), so enable retries with backoff · detect Valkey with <code>server_name</code> / <code>valkey_version</code>, not <code>redis_version</code> · merge the code change before running the upgrade.</div>
+<div class="box"><b>Next step:</b> No target has been applied. Create a remediation from these findings and choose a target. If you don't choose one, the recommended target is used. The choices per cache are Valkey 9, Valkey 8, Valkey 7.2 and Redis OSS 7.1, and the pull request says which target was used.</div>
+<p style="font-size:12px;color:#666">Costs are estimates based on on-demand pricing; confirm on https://aws.amazon.com/elasticache/pricing/. No separate Redis or Valkey license fee applies on ElastiCache.</p>
+</body></html>
