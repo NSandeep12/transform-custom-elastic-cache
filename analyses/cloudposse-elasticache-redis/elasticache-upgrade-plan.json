@@ -32,231 +32,16 @@
     ]
   },
   "summary": {
-    "n_caches": 3,
+    "n_caches": 4,
     "n_paying": 0,
     "n_soon": 0,
     "days_to_v6_charges": 76,
-    "est_monthly_extended_support_usd": "$0 (estimate; no cache on Redis OSS 4, 5 or 6)",
-    "rec_summary": "Valkey 9 for all 3 caches (9.1 node-based, major 9 Serverless); all are currently supported on Redis OSS 7.x"
+    "est_monthly_extended_support_usd": "$0 (estimate; all caches on Redis OSS 7.x)",
+    "rec_summary": "4 of 4 caches already supported on Redis OSS 7.x; Valkey 9 recommended as an optional cost-saving move for all 4"
   },
   "caches": [
     {
-      "name": "module.redis (examples/complete) -> aws_elasticache_replication_group.default",
-      "live_id": null,
-      "type": "aws_elasticache_replication_group",
-      "dialect": "terraform",
-      "file": "examples/complete/fixtures.us-east-2.tfvars",
-      "line": 20,
-      "engine": "redis",
-      "version": "7.0",
-      "version_source": {
-        "file": "examples/complete/fixtures.us-east-2.tfvars",
-        "line": 20,
-        "note": "engine_version = \"7.0\" -> examples/complete/main.tf:56 (var.engine_version) -> main.tf:185 (local.engine_version). engine defaults to \"redis\" (variables.tf:65). Replication group id resolves to eg-test-redis-test-<random> (terratest)."
-      },
-      "status": "SUPPORTED",
-      "status_text": "Supported. Optional: move to Valkey to cut cost.",
-      "status_source": "docs",
-      "risk": "Medium",
-      "risk_score": 3,
-      "risk_breakdown": [
-        {
-          "signal": "Single-node cluster (cluster_size = 1, num_cache_clusters = 1) with automatic_failover_enabled = false",
-          "points": 2,
-          "file": "examples/complete/fixtures.us-east-2.tfvars",
-          "line": 16
-        },
-        {
-          "signal": "CI runs terraform apply without plan review (Terratest InitAndApply/Apply uses -auto-approve, triggered by /terratest chatops)",
-          "points": 1,
-          "file": "test/src/examples_complete_test.go",
-          "line": 37
-        }
-      ],
-      "blockers": [],
-      "recommended": "valkey-9",
-      "recommended_version": "9.1",
-      "recommendation_rule": 3,
-      "reason": "Valkey is the AWS-recommended direction. The newest version gives the longest runway and your clients are compatible.",
-      "alternatives": [
-        {
-          "id": "A+",
-          "target": "Valkey 9 (9.1, confirm newest 9.x)",
-          "engine": "valkey",
-          "family": "valkey9",
-          "tradeoff": "Recommended. AWS-recommended Valkey path with the newest features and longest runway; about 20% lower node price than Redis OSS. Rollback only by snapshot restore."
-        },
-        {
-          "id": "A",
-          "target": "Valkey 8 (8.2, confirm newest 8.x)",
-          "engine": "valkey",
-          "family": "valkey8",
-          "tradeoff": "Same Valkey savings (about 20% node-based), one upgrade, highest 8.x. Rollback only by snapshot restore."
-        },
-        {
-          "id": "B",
-          "target": "Valkey 7.2, then 8/9",
-          "engine": "valkey",
-          "family": "valkey7",
-          "tradeoff": "Keeps an in-place rollback to Redis OSS 7.1 while you validate; costs a second change window later."
-        },
-        {
-          "id": "C",
-          "target": "Redis OSS 7.1",
-          "engine": "redis",
-          "family": "redis7",
-          "tradeoff": "Stays on Redis OSS; no Valkey discount and no newer engine features; end-of-support date not yet published. No in-place downgrade."
-        }
-      ],
-      "chosen": null,
-      "live_data": "unavailable",
-      "cost_estimate": {
-        "label": "estimate",
-        "basis": "Engine is Redis OSS 7.x, which is not in Extended Support; no Extended Support premium applies.",
-        "monthly_usd": "0",
-        "pricing_url": "https://aws.amazon.com/elasticache/pricing/"
-      },
-      "app_findings": [
-        {
-          "signal": "Monitoring: CloudWatch alarm description names the engine ('Redis cluster CPU utilization')",
-          "file": "main.tf",
-          "line": 285,
-          "impact": "Low. Alarm keeps working (dimension is CacheClusterId); the text would be misleading after a move to Valkey.",
-          "action": "Optionally update the alarm description and any dashboards/runbooks that mention Redis or the redis7 parameter group name."
-        },
-        {
-          "signal": "Monitoring: CloudWatch alarm description names the engine ('Redis cluster freeable memory')",
-          "file": "main.tf",
-          "line": 309,
-          "impact": "Low. Alarm keeps working (dimension is CacheClusterId); the text would be misleading after a move to Valkey.",
-          "action": "Optionally update the alarm description and any dashboards/runbooks that mention Redis or the redis7 parameter group name."
-        },
-        {
-          "signal": "Monitoring: parameter group name embeds the family (\"${module.this.id}-${local.safe_family}\")",
-          "file": "main.tf",
-          "line": 103,
-          "impact": "Low. The parameter group name changes with the family (redis7 -> valkey9); create_before_destroy is already set on the group.",
-          "action": "Update any alarms, dashboards or runbooks that reference the old parameter group name."
-        },
-        {
-          "signal": "Every workload: node IPs change (node-based)",
-          "file": "(all)",
-          "line": 0,
-          "impact": "Node IPs change during an in-place upgrade.",
-          "action": "Use the endpoint DNS name; no hard-coded node IPs were found in this repository."
-        },
-        {
-          "signal": "Every workload: failover / connection drop",
-          "file": "(all)",
-          "line": 0,
-          "impact": "Writes pause for a few seconds (source >= 5.0.6); connections drop.",
-          "action": "Enable retries with exponential backoff and reconnect in the consuming applications."
-        },
-        {
-          "signal": "Every workload: INFO version",
-          "file": "(all)",
-          "line": 0,
-          "impact": "Valkey reports redis_version:7.2.4.",
-          "action": "Detect Valkey with server_name / valkey_version, not redis_version."
-        },
-        {
-          "signal": "Every workload: upgrade timing",
-          "file": "(all)",
-          "line": 0,
-          "impact": "Upgrades are never automatic for node-based clusters.",
-          "action": "Merge the IaC change first, then run the upgrade."
-        }
-      ]
-    },
-    {
-      "name": "module.redis (examples/serverless) -> aws_elasticache_serverless_cache.default",
-      "live_id": null,
-      "type": "aws_elasticache_serverless_cache",
-      "dialect": "terraform",
-      "file": "examples/serverless/fixtures.us-east-2.tfvars",
-      "line": 15,
-      "engine": "redis",
-      "version": "7",
-      "version_source": {
-        "file": "examples/serverless/fixtures.us-east-2.tfvars",
-        "line": 15,
-        "note": "serverless_major_engine_version = \"7\" -> examples/serverless/main.tf:52 -> main.tf:245. engine not set by the example, so var.engine default \"redis\" (variables.tf:65) is used at main.tf:236."
-      },
-      "status": "SUPPORTED",
-      "status_text": "Supported. Optional: move to Valkey to cut cost.",
-      "status_source": "docs",
-      "risk": "Low",
-      "risk_score": 0,
-      "risk_breakdown": [],
-      "blockers": [],
-      "recommended": "valkey-9",
-      "recommended_version": "9",
-      "recommendation_rule": 3,
-      "reason": "Valkey is the AWS-recommended direction. The newest version gives the longest runway and your clients are compatible. Major upgrades on Serverless run without downtime.",
-      "alternatives": [
-        {
-          "id": "A+",
-          "target": "Valkey 9 Serverless (major_engine_version 9)",
-          "engine": "valkey",
-          "family": "n/a (serverless)",
-          "tradeoff": "Recommended. Newest Valkey, about 33% lower Serverless price, major upgrade runs without downtime. Confirm Region availability."
-        },
-        {
-          "id": "A",
-          "target": "Valkey 8 Serverless (major_engine_version 8)",
-          "engine": "valkey",
-          "family": "n/a (serverless)",
-          "tradeoff": "Same Serverless savings (about 33%), one upgrade without downtime."
-        },
-        {
-          "id": "B",
-          "target": "Valkey 7 Serverless (major_engine_version 7)",
-          "engine": "valkey",
-          "family": "n/a (serverless)",
-          "tradeoff": "Lowest Valkey major; keeps closest parity with Redis OSS 7; a later upgrade is needed for newer features."
-        },
-        {
-          "id": "C",
-          "target": "Redis OSS 7 Serverless (current)",
-          "engine": "redis",
-          "family": "n/a (serverless)",
-          "tradeoff": "No change needed for support; no Valkey discount; end-of-support date not yet published."
-        }
-      ],
-      "chosen": null,
-      "live_data": "unavailable",
-      "cost_estimate": {
-        "label": "estimate",
-        "basis": "Serverless Redis OSS 7; not in Extended Support.",
-        "monthly_usd": "0",
-        "pricing_url": "https://aws.amazon.com/elasticache/pricing/"
-      },
-      "app_findings": [
-        {
-          "signal": "Every workload: failover / connection drop",
-          "file": "(all)",
-          "line": 0,
-          "impact": "Writes pause for a few seconds (source >= 5.0.6); connections drop.",
-          "action": "Enable retries with exponential backoff and reconnect in the consuming applications."
-        },
-        {
-          "signal": "Every workload: INFO version",
-          "file": "(all)",
-          "line": 0,
-          "impact": "Valkey reports redis_version:7.2.4.",
-          "action": "Detect Valkey with server_name / valkey_version, not redis_version."
-        },
-        {
-          "signal": "Every workload: upgrade timing",
-          "file": "(all)",
-          "line": 0,
-          "impact": "Upgrades are never automatic for node-based clusters.",
-          "action": "Merge the IaC change first, then run the upgrade."
-        }
-      ]
-    },
-    {
-      "name": "aws_elasticache_replication_group.default (module defaults)",
+      "name": "aws_elasticache_replication_group.default",
       "live_id": null,
       "type": "aws_elasticache_replication_group",
       "dialect": "terraform",
@@ -267,7 +52,7 @@
       "version_source": {
         "file": "variables.tf",
         "line": 71,
-        "note": "Module default engine_version = \"7.1\" (engine default \"redis\" at variables.tf:65, family default \"redis7\" at variables.tf:50). Applies to any downstream caller that does not override these inputs; consumers' own values are outside this repository."
+        "note": "Module default var.engine_version = \"7.1\" (variables.tf:71), engine var.engine = \"redis\" (variables.tf:65), passed via local.engine_version (main.tf:10) to main.tf:185. Callers can override; null when global_replication_group_id is set."
       },
       "status": "SUPPORTED",
       "status_text": "Supported. Optional: move to Valkey to cut cost.",
@@ -276,7 +61,7 @@
       "risk_score": 2,
       "risk_breakdown": [
         {
-          "signal": "Defaults produce a single-node replication group (cluster_size = 1, automatic_failover_enabled = false, multi_az_enabled = false)",
+          "signal": "Single-node default with automatic failover off (cluster_size = 1, automatic_failover_enabled = false, multi_az_enabled = false)",
           "points": 2,
           "file": "variables.tf",
           "line": 32
@@ -289,243 +74,457 @@
       "reason": "Valkey is the AWS-recommended direction. The newest version gives the longest runway and your clients are compatible.",
       "alternatives": [
         {
-          "id": "A+",
-          "target": "Valkey 9 (9.1, confirm newest 9.x)",
-          "engine": "valkey",
-          "family": "valkey9",
-          "tradeoff": "Recommended. AWS-recommended Valkey path with the newest features and longest runway; about 20% lower node price than Redis OSS. Rollback only by snapshot restore."
-        },
-        {
           "id": "A",
-          "target": "Valkey 8 (8.2, confirm newest 8.x)",
+          "target": "valkey-8",
           "engine": "valkey",
           "family": "valkey8",
-          "tradeoff": "Same Valkey savings (about 20% node-based), one upgrade, highest 8.x. Rollback only by snapshot restore."
+          "tradeoff": "Valkey 8.2 (confirm newest 8.x with DescribeCacheEngineVersions). About 20% lower node price than Redis OSS. One upgrade; rollback by snapshot restore only."
         },
         {
           "id": "B",
-          "target": "Valkey 7.2, then 8/9",
+          "target": "valkey-7.2",
           "engine": "valkey",
           "family": "valkey7",
-          "tradeoff": "Keeps an in-place rollback to Redis OSS 7.1 while you validate; costs a second change window later."
+          "tradeoff": "Keeps an in-place rollback to Redis OSS 7.1 while you validate. Costs a second change window later to reach Valkey 8/9."
         },
         {
           "id": "C",
-          "target": "Redis OSS 7.1",
+          "target": "redis-7.1",
           "engine": "redis",
           "family": "redis7",
-          "tradeoff": "Stays on Redis OSS; no Valkey discount and no newer engine features; end-of-support date not yet published. No in-place downgrade."
+          "tradeoff": "Already on Redis OSS 7.1: stay as is. No Valkey discount and no newer engine features; end-of-support date for 7.x is not published yet."
+        },
+        {
+          "id": "D",
+          "target": "redis-6.2",
+          "engine": "redis",
+          "family": "redis6.x",
+          "tradeoff": "Not recommended. A downgrade from 7.x is not possible in place, and Redis OSS 6 Extended Support charges start Feb 1, 2027."
         }
       ],
       "chosen": null,
       "live_data": "unavailable",
       "cost_estimate": {
         "label": "estimate",
-        "basis": "Engine is Redis OSS 7.x, which is not in Extended Support; no Extended Support premium applies.",
+        "basis": "Redis OSS 7.x is in standard support; no Extended Support premium applies.",
         "monthly_usd": "0",
         "pricing_url": "https://aws.amazon.com/elasticache/pricing/"
       },
       "app_findings": [
         {
-          "signal": "Monitoring: CloudWatch alarm description names the engine ('Redis cluster CPU utilization')",
+          "signal": "RBAC and TLS (AUTH token / in-transit encryption)",
           "file": "main.tf",
-          "line": 285,
-          "impact": "Low. Alarm keeps working (dimension is CacheClusterId); the text would be misleading after a move to Valkey.",
-          "action": "Optionally update the alarm description and any dashboards/runbooks that mention Redis or the redis7 parameter group name."
+          "line": 165,
+          "impact": "Low. Auth token and TLS carry over to Valkey; Valkey replication groups need in-transit encryption (module default is true, variables.tf:83).",
+          "action": "Confirm clients still authenticate and connect with TLS (rediss://) after the upgrade. Keep transit_encryption_enabled = true."
         },
         {
-          "signal": "Monitoring: CloudWatch alarm description names the engine ('Redis cluster freeable memory')",
+          "signal": "RBAC user groups (user_group_ids / serverless_user_group_id)",
           "file": "main.tf",
-          "line": 309,
-          "impact": "Low. Alarm keeps working (dimension is CacheClusterId); the text would be misleading after a move to Valkey.",
-          "action": "Optionally update the alarm description and any dashboards/runbooks that mention Redis or the redis7 parameter group name."
+          "line": 215,
+          "impact": "Low. Users and user groups passed in by the caller must use an engine compatible with the target.",
+          "action": "If callers attach user groups, check their aws_elasticache_user / user_group engine values match the chosen target (redis or valkey)."
         },
         {
-          "signal": "Monitoring: parameter group name embeds the family (\"${module.this.id}-${local.safe_family}\")",
+          "signal": "Monitoring / naming: parameter group name derived from family",
           "file": "main.tf",
           "line": 103,
-          "impact": "Low. The parameter group name changes with the family (redis7 -> valkey9); create_before_destroy is already set on the group.",
-          "action": "Update any alarms, dashboards or runbooks that reference the old parameter group name."
-        },
-        {
-          "signal": "Every workload: node IPs change (node-based)",
-          "file": "(all)",
-          "line": 0,
-          "impact": "Node IPs change during an in-place upgrade.",
-          "action": "Use the endpoint DNS name; no hard-coded node IPs were found in this repository."
-        },
-        {
-          "signal": "Every workload: failover / connection drop",
-          "file": "(all)",
-          "line": 0,
-          "impact": "Writes pause for a few seconds (source >= 5.0.6); connections drop.",
-          "action": "Enable retries with exponential backoff and reconnect in the consuming applications."
-        },
-        {
-          "signal": "Every workload: INFO version",
-          "file": "(all)",
-          "line": 0,
-          "impact": "Valkey reports redis_version:7.2.4.",
-          "action": "Detect Valkey with server_name / valkey_version, not redis_version."
-        },
-        {
-          "signal": "Every workload: upgrade timing",
-          "file": "(all)",
-          "line": 0,
-          "impact": "Upgrades are never automatic for node-based clusters.",
-          "action": "Merge the IaC change first, then run the upgrade."
+          "impact": "Low. The created parameter group name embeds the family (e.g. <id>-redis7), so it changes with the target family.",
+          "action": "Update dashboards, alarms or runbooks that reference the old parameter group name or engine 'redis'."
         }
       ]
+    },
+    {
+      "name": "aws_elasticache_serverless_cache.default",
+      "live_id": null,
+      "type": "aws_elasticache_serverless_cache",
+      "dialect": "terraform",
+      "file": "variables.tf",
+      "line": 309,
+      "engine": "redis",
+      "version": "7",
+      "version_source": {
+        "file": "variables.tf",
+        "line": 309,
+        "note": "Module default var.serverless_major_engine_version = \"7\" (variables.tf:309) used at main.tf:245; engine var.engine = \"redis\" (main.tf:236). Created only when serverless_enabled = true."
+      },
+      "status": "SUPPORTED",
+      "status_text": "Supported. Optional: move to Valkey to cut cost.",
+      "status_source": "docs",
+      "risk": "Low",
+      "risk_score": 0,
+      "risk_breakdown": [],
+      "blockers": [],
+      "recommended": "valkey-9",
+      "recommended_version": "9",
+      "recommendation_rule": 3,
+      "reason": "Valkey is the AWS-recommended direction. The newest version gives the longest runway and your clients are compatible.",
+      "alternatives": [
+        {
+          "id": "A",
+          "target": "valkey-8",
+          "engine": "valkey",
+          "family": "n/a (serverless major_engine_version = 8)",
+          "tradeoff": "About 33% lower Serverless price than Redis OSS. Major upgrades on Serverless run without downtime."
+        },
+        {
+          "id": "B",
+          "target": "valkey-7.2",
+          "engine": "valkey",
+          "family": "n/a (serverless major_engine_version = 7)",
+          "tradeoff": "Valkey 7 on Serverless; a second upgrade later to reach 8/9."
+        },
+        {
+          "id": "C",
+          "target": "redis-7.1",
+          "engine": "redis",
+          "family": "n/a (serverless major_engine_version = 7)",
+          "tradeoff": "Already on Redis OSS 7 Serverless: stay as is. No Valkey discount; end-of-support date not published yet."
+        },
+        {
+          "id": "D",
+          "target": "redis-6.2",
+          "engine": "redis",
+          "family": "n/a",
+          "tradeoff": "Not recommended and not applicable to a Redis OSS 7 Serverless cache."
+        }
+      ],
+      "chosen": null,
+      "live_data": "unavailable",
+      "cost_estimate": {
+        "label": "estimate",
+        "basis": "Redis OSS 7.x is in standard support; no Extended Support premium applies.",
+        "monthly_usd": "0",
+        "pricing_url": "https://aws.amazon.com/elasticache/pricing/"
+      },
+      "app_findings": [
+        {
+          "signal": "RBAC user groups (user_group_ids / serverless_user_group_id)",
+          "file": "main.tf",
+          "line": 215,
+          "impact": "Low. Users and user groups passed in by the caller must use an engine compatible with the target.",
+          "action": "If callers attach user groups, check their aws_elasticache_user / user_group engine values match the chosen target (redis or valkey)."
+        }
+      ]
+    },
+    {
+      "name": "module.redis (examples/complete)",
+      "live_id": null,
+      "type": "aws_elasticache_replication_group (via module source ../../)",
+      "dialect": "terraform",
+      "file": "examples/complete/fixtures.us-east-2.tfvars",
+      "line": 20,
+      "engine": "redis",
+      "version": "7.0",
+      "version_source": {
+        "file": "examples/complete/fixtures.us-east-2.tfvars",
+        "line": 20,
+        "note": "engine_version = \"7.0\" in fixtures.us-east-2.tfvars:20, passed at examples/complete/main.tf:56; family = \"redis7\" (tfvars:18); engine defaults to redis. Terratest fixture, region us-east-2."
+      },
+      "status": "SUPPORTED",
+      "status_text": "Supported. Optional: move to Valkey to cut cost.",
+      "status_source": "docs",
+      "risk": "Low",
+      "risk_score": 2,
+      "risk_breakdown": [
+        {
+          "signal": "Single-node cluster (cluster_size = 1) with automatic_failover_enabled = false",
+          "points": 2,
+          "file": "examples/complete/fixtures.us-east-2.tfvars",
+          "line": 16
+        }
+      ],
+      "blockers": [],
+      "recommended": "valkey-9",
+      "recommended_version": "9.1",
+      "recommendation_rule": 3,
+      "reason": "Valkey is the AWS-recommended direction. The newest version gives the longest runway and your clients are compatible.",
+      "alternatives": [
+        {
+          "id": "A",
+          "target": "valkey-8",
+          "engine": "valkey",
+          "family": "valkey8",
+          "tradeoff": "Valkey 8.2 (confirm newest 8.x with DescribeCacheEngineVersions). About 20% lower node price than Redis OSS. One upgrade; rollback by snapshot restore only."
+        },
+        {
+          "id": "B",
+          "target": "valkey-7.2",
+          "engine": "valkey",
+          "family": "valkey7",
+          "tradeoff": "Keeps an in-place rollback to Redis OSS 7.1 while you validate. Costs a second change window later to reach Valkey 8/9."
+        },
+        {
+          "id": "C",
+          "target": "redis-7.1",
+          "engine": "redis",
+          "family": "redis7",
+          "tradeoff": "Minor upgrade from 7.0 to 7.1. No Valkey discount and no newer engine features; end-of-support date for 7.x is not published yet."
+        },
+        {
+          "id": "D",
+          "target": "redis-6.2",
+          "engine": "redis",
+          "family": "redis6.x",
+          "tradeoff": "Not recommended. A downgrade from 7.x is not possible in place, and Redis OSS 6 Extended Support charges start Feb 1, 2027."
+        }
+      ],
+      "chosen": null,
+      "live_data": "unavailable",
+      "cost_estimate": {
+        "label": "estimate",
+        "basis": "Redis OSS 7.x is in standard support; no Extended Support premium applies.",
+        "monthly_usd": "0",
+        "pricing_url": "https://aws.amazon.com/elasticache/pricing/"
+      },
+      "app_findings": [
+        {
+          "signal": "RBAC and TLS (AUTH token / in-transit encryption)",
+          "file": "main.tf",
+          "line": 165,
+          "impact": "Low. Auth token and TLS carry over to Valkey; Valkey replication groups need in-transit encryption (module default is true, variables.tf:83).",
+          "action": "Confirm clients still authenticate and connect with TLS (rediss://) after the upgrade. Keep transit_encryption_enabled = true."
+        },
+        {
+          "signal": "Monitoring / naming: parameter group name derived from family",
+          "file": "main.tf",
+          "line": 103,
+          "impact": "Low. The created parameter group name embeds the family (e.g. <id>-redis7), so it changes with the target family.",
+          "action": "Update dashboards, alarms or runbooks that reference the old parameter group name or engine 'redis'."
+        },
+        {
+          "signal": "Pub/Sub keyspace notifications (notify-keyspace-events = lK)",
+          "file": "examples/complete/main.tf",
+          "line": 68,
+          "impact": "Low. Subscribers to keyspace events lose their connection during failover; delivery is at-most-once.",
+          "action": "Resubscribe on reconnect. Confirm the parameter is carried into the new valkey parameter group."
+        }
+      ]
+    },
+    {
+      "name": "module.redis (examples/serverless)",
+      "live_id": null,
+      "type": "aws_elasticache_serverless_cache (via module source ../../)",
+      "dialect": "terraform",
+      "file": "examples/serverless/fixtures.us-east-2.tfvars",
+      "line": 15,
+      "engine": "redis",
+      "version": "7",
+      "version_source": {
+        "file": "examples/serverless/fixtures.us-east-2.tfvars",
+        "line": 15,
+        "note": "serverless_major_engine_version = \"7\" in fixtures.us-east-2.tfvars:15, passed at examples/serverless/main.tf:52; engine defaults to redis. Terratest fixture, region us-east-2."
+      },
+      "status": "SUPPORTED",
+      "status_text": "Supported. Optional: move to Valkey to cut cost.",
+      "status_source": "docs",
+      "risk": "Low",
+      "risk_score": 0,
+      "risk_breakdown": [],
+      "blockers": [],
+      "recommended": "valkey-9",
+      "recommended_version": "9",
+      "recommendation_rule": 3,
+      "reason": "Valkey is the AWS-recommended direction. The newest version gives the longest runway and your clients are compatible.",
+      "alternatives": [
+        {
+          "id": "A",
+          "target": "valkey-8",
+          "engine": "valkey",
+          "family": "n/a (serverless major_engine_version = 8)",
+          "tradeoff": "About 33% lower Serverless price than Redis OSS. Major upgrades on Serverless run without downtime."
+        },
+        {
+          "id": "B",
+          "target": "valkey-7.2",
+          "engine": "valkey",
+          "family": "n/a (serverless major_engine_version = 7)",
+          "tradeoff": "Valkey 7 on Serverless; a second upgrade later to reach 8/9."
+        },
+        {
+          "id": "C",
+          "target": "redis-7.1",
+          "engine": "redis",
+          "family": "n/a (serverless major_engine_version = 7)",
+          "tradeoff": "Already on Redis OSS 7 Serverless: stay as is. No Valkey discount; end-of-support date not published yet."
+        },
+        {
+          "id": "D",
+          "target": "redis-6.2",
+          "engine": "redis",
+          "family": "n/a",
+          "tradeoff": "Not recommended and not applicable to a Redis OSS 7 Serverless cache."
+        }
+      ],
+      "chosen": null,
+      "live_data": "unavailable",
+      "cost_estimate": {
+        "label": "estimate",
+        "basis": "Redis OSS 7.x is in standard support; no Extended Support premium applies.",
+        "monthly_usd": "0",
+        "pricing_url": "https://aws.amazon.com/elasticache/pricing/"
+      },
+      "app_findings": []
     }
   ],
   "other_resources": [
     {
       "name": "aws_elasticache_parameter_group.default",
       "file": "main.tf",
-      "line": 139,
+      "line": 135,
       "engine": "redis",
-      "version": "redis7 (family)",
-      "note": "Created by default (create_parameter_group = true, variables.tf:261) with family var.family = \"redis7\" (variables.tf:50). Only dynamic parameter notify-keyspace-events in examples/complete (plus static cluster-enabled when cluster mode is on). A remediation to Valkey must switch the family (valkey9/valkey8/valkey7) and carry these values over."
+      "version": "redis7",
+      "note": "Parameter group, family var.family default redis7 (variables.tf:50); follows the cache's target family on remediation."
     },
     {
       "name": "aws_elasticache_subnet_group.default",
       "file": "main.tf",
       "line": 127,
-      "engine": "n/a",
-      "version": "n/a",
-      "note": "Engine-independent; no change needed."
+      "engine": null,
+      "version": null,
+      "note": "Subnet group; engine independent, no change needed."
     }
   ],
   "findings": [
     {
-      "id": "EC-001",
-      "category": "end-of-support",
-      "severity": "Medium",
-      "file": "examples/complete/fixtures.us-east-2.tfvars",
-      "line": 20,
-      "resource": "module.redis (examples/complete) -> aws_elasticache_replication_group.default",
-      "title": "redis 7.0 is supported; Valkey recommended for cost",
-      "description": "aws_elasticache_replication_group runs redis 7.0 (set at examples/complete/fixtures.us-east-2.tfvars:20; engine_version = \"7.0\" -> examples/complete/main.tf:56 (var.engine_version) -> main.tf:185 (local.engine_version). engine defaults to \"redis\" (variables.tf:65). Replication group id resolves to eg-test-redis-test-<random> (terratest).) Status: SUPPORTED - Supported. Optional: move to Valkey to cut cost. Source: AWS documentation (live data, AWS Health and Trusted Advisor not read because live_access=off). Risk Medium (score 3): Single-node cluster (cluster_size = 1, num_cache_clusters = 1) with automatic_failover_enabled = false (+2, examples/complete/fixtures.us-east-2.tfvars:16); CI runs terraform apply without plan review (Terratest InitAndApply/Apply uses -auto-approve, triggered by /terratest chatops) (+1, test/src/examples_complete_test.go:37). No blockers: resource is a replication group/serverless cache and in-transit encryption is enabled (transit_encryption_enabled default true, variables.tf:83; serverless always uses TLS). Recommendation rule 3: valkey-9 9.1. Alternatives: Valkey 8, Valkey 7.2 (in-place rollback to Redis OSS 7.1), Redis OSS 7.1. Confirm the newest Valkey version in us-east-2 with DescribeCacheEngineVersions before applying. Extended Support exposure: none (estimate).\n\nELASTICACHE_PLAN\ncache=module.redis (examples/complete) -> aws_elasticache_replication_group.default\ndialect=terraform\ncurrent=redis 7.0\nstatus=SUPPORTED\nstatus_source=docs\nrisk=Medium\nrisk_score=3\nblockers=none\nrecommended=valkey-9\nrecommended_version=9.1\nreason=Valkey is the AWS-recommended direction. The newest version gives the longest runway and your clients are compatible.\nlive_data=unavailable\ndrift=none"
-    },
-    {
-      "id": "EC-002",
-      "category": "end-of-support",
-      "severity": "Low",
-      "file": "examples/serverless/fixtures.us-east-2.tfvars",
-      "line": 15,
-      "resource": "module.redis (examples/serverless) -> aws_elasticache_serverless_cache.default",
-      "title": "redis 7 is supported; Valkey recommended for cost",
-      "description": "aws_elasticache_serverless_cache runs redis 7 (set at examples/serverless/fixtures.us-east-2.tfvars:15; serverless_major_engine_version = \"7\" -> examples/serverless/main.tf:52 -> main.tf:245. engine not set by the example, so var.engine default \"redis\" (variables.tf:65) is used at main.tf:236.) Status: SUPPORTED - Supported. Optional: move to Valkey to cut cost. Source: AWS documentation (live data, AWS Health and Trusted Advisor not read because live_access=off). Risk Low (score 0): no risk signals scored. No blockers: resource is a replication group/serverless cache and in-transit encryption is enabled (transit_encryption_enabled default true, variables.tf:83; serverless always uses TLS). Recommendation rule 3: valkey-9 9. Alternatives: Valkey 8, Valkey 7.2 (in-place rollback to Redis OSS 7.1), Redis OSS 7.1. Confirm the newest Valkey version in us-east-2 with DescribeCacheEngineVersions before applying. Extended Support exposure: none (estimate).\n\nELASTICACHE_PLAN\ncache=module.redis (examples/serverless) -> aws_elasticache_serverless_cache.default\ndialect=terraform\ncurrent=redis 7\nstatus=SUPPORTED\nstatus_source=docs\nrisk=Low\nrisk_score=0\nblockers=none\nrecommended=valkey-9\nrecommended_version=9\nreason=Valkey is the AWS-recommended direction. The newest version gives the longest runway and your clients are compatible. Major upgrades on Serverless run without downtime.\nlive_data=unavailable\ndrift=none"
-    },
-    {
-      "id": "EC-003",
+      "id": "F1",
       "category": "end-of-support",
       "severity": "Low",
       "file": "variables.tf",
       "line": 71,
-      "resource": "aws_elasticache_replication_group.default (module defaults)",
-      "title": "redis 7.1 is supported; Valkey recommended for cost",
-      "description": "aws_elasticache_replication_group runs redis 7.1 (set at variables.tf:71; Module default engine_version = \"7.1\" (engine default \"redis\" at variables.tf:65, family default \"redis7\" at variables.tf:50). Applies to any downstream caller that does not override these inputs; consumers' own values are outside this repository.) Status: SUPPORTED - Supported. Optional: move to Valkey to cut cost. Source: AWS documentation (live data, AWS Health and Trusted Advisor not read because live_access=off). Risk Low (score 2): Defaults produce a single-node replication group (cluster_size = 1, automatic_failover_enabled = false, multi_az_enabled = false) (+2, variables.tf:32). No blockers: resource is a replication group/serverless cache and in-transit encryption is enabled (transit_encryption_enabled default true, variables.tf:83; serverless always uses TLS). Recommendation rule 3: valkey-9 9.1. Alternatives: Valkey 8, Valkey 7.2 (in-place rollback to Redis OSS 7.1), Redis OSS 7.1. Confirm the newest Valkey version in us-east-2 with DescribeCacheEngineVersions before applying. Extended Support exposure: none (estimate).\n\nELASTICACHE_PLAN\ncache=aws_elasticache_replication_group.default (module defaults)\ndialect=terraform\ncurrent=redis 7.1\nstatus=SUPPORTED\nstatus_source=docs\nrisk=Low\nrisk_score=2\nblockers=none\nrecommended=valkey-9\nrecommended_version=9.1\nreason=Valkey is the AWS-recommended direction. The newest version gives the longest runway and your clients are compatible.\nlive_data=unavailable\ndrift=none"
+      "resource": "aws_elasticache_replication_group.default",
+      "title": "aws_elasticache_replication_group.default: Redis OSS 7.1 is supported; Valkey 9 recommended (optional)",
+      "description": "aws_elasticache_replication_group.default runs Redis OSS 7.1 (Module default var.engine_version = \"7.1\" (variables.tf:71), engine var.engine = \"redis\" (variables.tf:65), passed via local.engine_version (main.tf:10) to main.tf:185. Callers can override; null when global_replication_group_id is set.) Status SUPPORTED (source: docs, AWS engine versions / Extended Support schedule; live data unavailable because live_access=off). Redis OSS 7.x is not in the Extended Support schedule for 4/5/6, so no Extended Support charges apply. Optional: move to Valkey to cut cost (about 20% lower node price). Risk Low (score 2). Recommended target: Valkey 9 (9.1, rule 3; confirm newest Valkey 9.x in us-east-2 with DescribeCacheEngineVersions). No target has been applied.\n\nELASTICACHE_PLAN\ncache=aws_elasticache_replication_group.default\ndialect=terraform\ncurrent=redis 7.1\nstatus=SUPPORTED\nstatus_source=docs\nrisk=Low\nrisk_score=2\nblockers=none\nrecommended=valkey-9\nrecommended_version=9.1\nreason=Valkey is the AWS-recommended direction. The newest version gives the longest runway and your clients are compatible.\nlive_data=unavailable\ndrift=none"
     },
     {
-      "id": "EC-004",
+      "id": "F2",
+      "category": "end-of-support",
+      "severity": "Low",
+      "file": "variables.tf",
+      "line": 309,
+      "resource": "aws_elasticache_serverless_cache.default",
+      "title": "aws_elasticache_serverless_cache.default: Redis OSS 7 is supported; Valkey 9 recommended (optional)",
+      "description": "aws_elasticache_serverless_cache.default runs Redis OSS 7 (Module default var.serverless_major_engine_version = \"7\" (variables.tf:309) used at main.tf:245; engine var.engine = \"redis\" (main.tf:236). Created only when serverless_enabled = true.) Status SUPPORTED (source: docs, AWS engine versions / Extended Support schedule; live data unavailable because live_access=off). Redis OSS 7.x is not in the Extended Support schedule for 4/5/6, so no Extended Support charges apply. Optional: move to Valkey to cut cost (about 33% lower on Serverless; major upgrades on Serverless run without downtime). Risk Low (score 0). Recommended target: Valkey 9 (9, rule 3; confirm newest Valkey 9.x in us-east-2 with DescribeCacheEngineVersions). No target has been applied.\n\nELASTICACHE_PLAN\ncache=aws_elasticache_serverless_cache.default\ndialect=terraform\ncurrent=redis 7\nstatus=SUPPORTED\nstatus_source=docs\nrisk=Low\nrisk_score=0\nblockers=none\nrecommended=valkey-9\nrecommended_version=9\nreason=Valkey is the AWS-recommended direction. The newest version gives the longest runway and your clients are compatible.\nlive_data=unavailable\ndrift=none"
+    },
+    {
+      "id": "F3",
+      "category": "end-of-support",
+      "severity": "Low",
+      "file": "examples/complete/fixtures.us-east-2.tfvars",
+      "line": 20,
+      "resource": "module.redis (examples/complete)",
+      "title": "module.redis (examples/complete): Redis OSS 7.0 is supported; Valkey 9 recommended (optional)",
+      "description": "module.redis (examples/complete) runs Redis OSS 7.0 (engine_version = \"7.0\" in fixtures.us-east-2.tfvars:20, passed at examples/complete/main.tf:56; family = \"redis7\" (tfvars:18); engine defaults to redis. Terratest fixture, region us-east-2.) Status SUPPORTED (source: docs, AWS engine versions / Extended Support schedule; live data unavailable because live_access=off). Redis OSS 7.x is not in the Extended Support schedule for 4/5/6, so no Extended Support charges apply. Optional: move to Valkey to cut cost (about 20% lower node price). Risk Low (score 2). Recommended target: Valkey 9 (9.1, rule 3; confirm newest Valkey 9.x in us-east-2 with DescribeCacheEngineVersions). No target has been applied.\n\nELASTICACHE_PLAN\ncache=module.redis (examples/complete)\ndialect=terraform\ncurrent=redis 7.0\nstatus=SUPPORTED\nstatus_source=docs\nrisk=Low\nrisk_score=2\nblockers=none\nrecommended=valkey-9\nrecommended_version=9.1\nreason=Valkey is the AWS-recommended direction. The newest version gives the longest runway and your clients are compatible.\nlive_data=unavailable\ndrift=none"
+    },
+    {
+      "id": "F4",
+      "category": "end-of-support",
+      "severity": "Low",
+      "file": "examples/serverless/fixtures.us-east-2.tfvars",
+      "line": 15,
+      "resource": "module.redis (examples/serverless)",
+      "title": "module.redis (examples/serverless): Redis OSS 7 is supported; Valkey 9 recommended (optional)",
+      "description": "module.redis (examples/serverless) runs Redis OSS 7 (serverless_major_engine_version = \"7\" in fixtures.us-east-2.tfvars:15, passed at examples/serverless/main.tf:52; engine defaults to redis. Terratest fixture, region us-east-2.) Status SUPPORTED (source: docs, AWS engine versions / Extended Support schedule; live data unavailable because live_access=off). Redis OSS 7.x is not in the Extended Support schedule for 4/5/6, so no Extended Support charges apply. Optional: move to Valkey to cut cost (about 33% lower on Serverless; major upgrades on Serverless run without downtime). Risk Low (score 0). Recommended target: Valkey 9 (9, rule 3; confirm newest Valkey 9.x in us-east-2 with DescribeCacheEngineVersions). No target has been applied.\n\nELASTICACHE_PLAN\ncache=module.redis (examples/serverless)\ndialect=terraform\ncurrent=redis 7\nstatus=SUPPORTED\nstatus_source=docs\nrisk=Low\nrisk_score=0\nblockers=none\nrecommended=valkey-9\nrecommended_version=9\nreason=Valkey is the AWS-recommended direction. The newest version gives the longest runway and your clients are compatible.\nlive_data=unavailable\ndrift=none"
+    },
+    {
+      "id": "F5",
       "category": "info",
       "severity": "Low",
       "file": ".",
       "line": 1,
-      "resource": "live account",
-      "title": "Live data unavailable (live_access=off)",
-      "description": "live_access=off was set in the plan context, so no AWS credentials were used and no describe calls were made. Live engine versions, node types, topology, Global Datastore membership and drift could not be checked; live_data=unavailable in every plan block. Unmanaged live caches (not in IaC) cannot be detected. Rerun with live_access=auto and a read-only role (elasticache:Describe*, elasticache:ListTagsForResource, health:Describe*, support:DescribeTrustedAdvisor*, sts:GetCallerIdentity) to confirm."
+      "resource": "repository",
+      "title": "All Redis OSS caches are already supported (Redis OSS 7.x)",
+      "description": "No Redis OSS 4, 5 or 6 caches were found. Every ElastiCache cache defined in this repository resolves to Redis OSS 7.0, 7.1 or Serverless major version 7, which are in standard support. No Extended Support exposure. Moving to Valkey is optional and reduces cost."
     },
     {
-      "id": "EC-005",
+      "id": "F6",
       "category": "info",
       "severity": "Low",
       "file": ".",
       "line": 1,
-      "resource": "AWS Health",
-      "title": "AWS Health events not read",
-      "description": "AWS Health ElastiCache lifecycle events were not read (live_access=off). Lifecycle status was taken from AWS documentation (https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/extended-support-versions.html)."
+      "resource": "live AWS account",
+      "title": "Live data, AWS Health and Trusted Advisor not read (live_access=off)",
+      "description": "live_access=off was set, so no AWS API calls were made (no STS, ElastiCache, Health or Trusted Advisor). Versions and status come from the repository and AWS documentation. Drift was not checked. Rerun with live_access=auto and read-only credentials to confirm the running versions and detect drift."
     },
     {
-      "id": "EC-006",
-      "category": "info",
-      "severity": "Low",
-      "file": ".",
-      "line": 1,
-      "resource": "AWS Trusted Advisor",
-      "title": "Trusted Advisor findings not read",
-      "description": "ElastiCache-related Trusted Advisor checks were not read (live_access=off)."
-    },
-    {
-      "id": "EC-007",
+      "id": "F7",
       "category": "info",
       "severity": "Low",
       "file": "main.tf",
       "line": 135,
       "resource": "aws_elasticache_parameter_group.default",
-      "title": "Redis parameter group (family redis7) tied to the cache engine",
-      "description": "Created by default (create_parameter_group = true, variables.tf:261) with family var.family = \"redis7\" (variables.tf:50). Only dynamic parameter notify-keyspace-events in examples/complete (plus static cluster-enabled when cluster mode is on). A remediation to Valkey must switch the family (valkey9/valkey8/valkey7) and carry these values over."
+      "title": "Custom parameter group on family redis7",
+      "description": "Created by default (create_parameter_group = true, variables.tf:261) with family var.family = \"redis7\" (variables.tf:50). Only caller-supplied parameters are set (default []); the complete example sets notify-keyspace-events = lK (examples/complete/main.tf:68), a dynamic parameter. A Valkey target needs family valkey9/valkey8/valkey7 with the same parameter values. Not set when global_replication_group_id is used (main.tf:8)."
     },
     {
-      "id": "EC-008",
+      "id": "F8",
+      "category": "info",
+      "severity": "Low",
+      "file": "versions.tf",
+      "line": 7,
+      "resource": "terraform provider hashicorp/aws",
+      "title": "AWS provider constraint >= 5.73.0 allows Valkey",
+      "description": "The root module requires hashicorp/aws >= 5.73.0, the release line that added engine = \"valkey\" for replication groups and Serverless caches. No provider major-version bump is needed (not a blocker). The examples declare looser constraints (>= 4.18, >= 5.32) but inherit the root constraint. Confirm Valkey 9 support in the provider version you pin."
+    },
+    {
+      "id": "F9",
       "category": "info",
       "severity": "Low",
       "file": "main.tf",
       "line": 198,
       "resource": "aws_elasticache_replication_group.default",
-      "title": "Optional Global Datastore membership (global_replication_group_id)",
-      "description": "global_replication_group_id defaults to null (variables.tf:339) and no example sets it, so no Global Datastore is configured in this repository. A downstream caller that sets it would hit the Global Datastore blocker (secondary Regions upgrade first; parameter group managed globally)."
+      "title": "Global Datastore supported by input (not used by defaults)",
+      "description": "When a caller sets global_replication_group_id, engine, engine_version, parameter group and transit encryption are nulled (main.tf:8-15) and managed by the Global Datastore. Such a deployment would be a blocker for automatic remediation (secondary Regions upgrade first). Not used in this repository's examples."
     },
     {
-      "id": "EC-009",
-      "category": "info",
+      "id": "F10",
+      "category": "app-impact",
       "severity": "Low",
-      "file": "variables.tf",
-      "line": 83,
+      "file": "main.tf",
+      "line": 165,
       "resource": "aws_elasticache_replication_group.default",
-      "title": "Valkey targets need in-transit encryption; module default is enabled",
-      "description": "transit_encryption_enabled defaults to true (variables.tf:83) and examples/complete sets it true (fixtures.us-east-2.tfvars:24). A downstream caller that sets it to false would hit the in-transit encryption blocker for Valkey targets (enable TLS with transit_encryption_mode = preferred then required, or choose Redis OSS 7.1)."
+      "title": "RBAC and TLS (AUTH token / in-transit encryption)",
+      "description": "Low. Auth token and TLS carry over to Valkey; Valkey replication groups need in-transit encryption (module default is true, variables.tf:83). Action: Confirm clients still authenticate and connect with TLS (rediss://) after the upgrade. Keep transit_encryption_enabled = true."
     },
     {
-      "id": "EC-010",
+      "id": "F11",
       "category": "app-impact",
       "severity": "Low",
       "file": "main.tf",
-      "line": 285,
-      "resource": "aws_cloudwatch_metric_alarm / aws_elasticache_parameter_group",
-      "title": "Monitoring: CloudWatch alarm description names the engine ('Redis cluster CPU utilization')",
-      "description": "Low. Alarm keeps working (dimension is CacheClusterId); the text would be misleading after a move to Valkey. Action: Optionally update the alarm description and any dashboards/runbooks that mention Redis or the redis7 parameter group name."
+      "line": 215,
+      "resource": "aws_elasticache_replication_group.default / aws_elasticache_serverless_cache.default",
+      "title": "RBAC user groups (user_group_ids / serverless_user_group_id)",
+      "description": "Low. Users and user groups passed in by the caller must use an engine compatible with the target. Action: If callers attach user groups, check their aws_elasticache_user / user_group engine values match the chosen target (redis or valkey). Serverless equivalent: user_group_id at main.tf:247."
     },
     {
-      "id": "EC-011",
-      "category": "app-impact",
-      "severity": "Low",
-      "file": "main.tf",
-      "line": 309,
-      "resource": "aws_cloudwatch_metric_alarm / aws_elasticache_parameter_group",
-      "title": "Monitoring: CloudWatch alarm description names the engine ('Redis cluster freeable memory')",
-      "description": "Low. Alarm keeps working (dimension is CacheClusterId); the text would be misleading after a move to Valkey. Action: Optionally update the alarm description and any dashboards/runbooks that mention Redis or the redis7 parameter group name."
-    },
-    {
-      "id": "EC-012",
+      "id": "F12",
       "category": "app-impact",
       "severity": "Low",
       "file": "main.tf",
       "line": 103,
-      "resource": "aws_cloudwatch_metric_alarm / aws_elasticache_parameter_group",
-      "title": "Monitoring: parameter group name embeds the family (\"${module.this.id}-${local.safe_family}\")",
-      "description": "Low. The parameter group name changes with the family (redis7 -> valkey9); create_before_destroy is already set on the group. Action: Update any alarms, dashboards or runbooks that reference the old parameter group name."
+      "resource": "aws_elasticache_parameter_group.default",
+      "title": "Monitoring / naming: parameter group name derived from family",
+      "description": "Low. The created parameter group name embeds the family (e.g. <id>-redis7), so it changes with the target family. Action: Update dashboards, alarms or runbooks that reference the old parameter group name or engine 'redis'."
+    },
+    {
+      "id": "F13",
+      "category": "app-impact",
+      "severity": "Low",
+      "file": "examples/complete/main.tf",
+      "line": 68,
+      "resource": "module.redis (examples/complete)",
+      "title": "Pub/Sub keyspace notifications (notify-keyspace-events = lK)",
+      "description": "Low. Subscribers to keyspace events lose their connection during failover; delivery is at-most-once. Action: Resubscribe on reconnect. Confirm the parameter is carried into the new valkey parameter group."
     }
   ],
   "drift": [],
   "warnings": [
-    "Live access was off: versions, topology and drift come from the repository only.",
-    "All Redis OSS caches in this repository are on 7.x and SUPPORTED; no Extended Support charges apply. Valkey is recommended for cost only.",
-    "Valkey 9.1 (node-based) and Serverless major 9 are taken from AWS documentation; confirm availability in us-east-2 with DescribeCacheEngineVersions before applying.",
-    "No application code, Redis client libraries, docker-compose or Helm files were found; consuming applications live outside this repository and need their own client check.",
-    "outputs.tf:47 exposes engine_version_actual; after a move to Valkey it reports the Valkey version. Any downstream logic that parses it as a Redis version should be checked.",
-    "Terratest (test/src/examples_complete_test.go:37) runs terraform apply with -auto-approve; review the plan manually for the remediation change."
+    "Live data unavailable (live_access=off): running versions, drift, Health events and Trusted Advisor findings were not checked.",
+    "This is a reusable module; callers can override engine_version/family. Callers that pin Redis OSS 4, 5 or 6 are not visible here and must be analysed in their own repositories.",
+    "If a caller sets transit_encryption_enabled = false, a Valkey replication group target becomes a blocker (enable TLS with transit_encryption_mode = preferred first, or choose Redis OSS 7.1).",
+    "If a caller sets global_replication_group_id, the Global Datastore blocker applies.",
+    "Default and example caches are single-node with automatic failover off; the upgrade will cause a short outage rather than a failover.",
+    "Valkey 9.1 / Serverless major 9 availability in us-east-2 was not confirmed live; confirm with DescribeCacheEngineVersions before remediation."
   ],
   "next_step": "No target has been applied. Create a remediation from these findings and choose a target. If you don't choose one, the recommended target is used."
 }

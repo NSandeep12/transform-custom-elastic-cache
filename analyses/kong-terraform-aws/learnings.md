@@ -1,20 +1,20 @@
-# Learnings – ElastiCache Redis OSS EOS analysis (kong-terraform-aws, 2026-11-17)
+# Learnings — ElastiCache Redis OSS EOS analysis (kong-terraform-aws, 2026-11-17)
 
 ## What worked
-- Single in-scope cache found quickly: `aws_elasticache_replication_group.kong` (redis.tf:1) plus `aws_elasticache_parameter_group.kong` (redis.tf:29).
-- Engine version resolved through variable defaults: `redis_engine_version = "5.0.5"` (variables.tf:487), `redis_family = "redis5.0"` (variables.tf:494).
-- The Redis client is the Kong runtime itself (ce_pkg 2.8.1 / ee_pkg 2.8.1.4), not a manifest dependency.
+- One Terraform replication group (`redis.tf:1`) with its engine version resolved from the `var.redis_engine_version` default (`variables.tf:487`, "5.0.5"). There are no tfvars files.
+- Status came from the lifecycle docs: Redis OSS 5 is PAYING_NOW (Extended Support Year 1 since 2026-02-01).
 
-## What failed / was not available
-- live_access=off: no STS, Health, Trusted Advisor, describe calls or DescribeCacheEngineVersions. Status is from docs; drift not checked; target versions (7.2 / 8.2 / 9.1) not confirmed for the Region.
+## What failed / not done
+- Live access, AWS Health and Trusted Advisor were not used because `live_access=off`. Drift, the live version (probably 5.0.6) and unmanaged caches were not checked.
 
-## Values that could not be resolved
-- Whether the cache is deployed (`enable_redis` defaults to false) and any caller overrides of version, family, node type, count.
-- AWS Region (no provider block; README example uses us-west-2) – cost estimate uses an assumed cache.t2.small rate.
-- AWS provider version (unpinned, no lock file); caller's Terraform version (CI pins 0.12.13 for fmt/init only).
-- Whether cache.t2.small is supported by the target engine in the Region.
+## Values not resolved
+- Region: comes from `data.aws_region.current`, so the cost estimate assumes us-east-1 pricing for cache.t2.small (~$0.034/hour).
+- Whether the cache is deployed: `enable_redis` defaults to false.
+- AWS provider version: not pinned.
+- Kong Redis client version: lua-resty-redis inside Kong, not in any manifest. No known minimum, so the client check passes.
+- Whether cache.t2.small is offered for Valkey 9 in the target Region.
 
-## Judgment calls
-- "No staging environment found" scored +1: the repo is a generic module with no per-environment configuration.
-- "Client older than 3 years" scored +1 for Kong 2.8.1 (2022). This pushed the score to 6 (High), so rule 2 (Valkey 7.2) applies over rule 3 (Valkey 9).
-- Missing `transit_encryption_enabled` was reported as a blocker for a Valkey target.
+## Judgement calls
+- I scored automatic failover as off (+2) because `automatic_failover_enabled` is unset.
+- I scored "no staging environment" (+1) because this is a module that has `var.environment` but no staging configuration.
+- I did not count the CI pipeline: it only runs fmt/init on pull requests.

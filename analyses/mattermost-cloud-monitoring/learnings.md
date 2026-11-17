@@ -1,14 +1,17 @@
-# Learnings: ElastiCache Redis OSS end-of-support analysis
+# Learnings: ElastiCache Redis OSS EOS analysis (mattermost-cloud-monitoring)
 
 ## What worked
-- A repository-wide grep for `elasticache|redis` found the only ElastiCache module, `aws/redis` (aws_elasticache_cluster plus a subnet group).
-- The engine version resolved through `var.redis_version` to its default `"7.1"` (variables.tf:14). Status SUPPORTED comes from the lifecycle documentation.
-- The blockers come straight from the IaC: a standalone `aws_elasticache_cluster` with no `transit_encryption_enabled`.
+- A repo-wide grep for `elasticache`/`redis` found a single module: `aws/redis` (one `aws_elasticache_cluster`, one subnet group).
+- Engine version resolved via `var.redis_version` -> default `7.1` (aws/redis/variables.tf:14).
 
-## What failed / limits
-- Live access was off (`live_access=off`), so no live, Health or Trusted Advisor data was used, and drift and unmanaged caches were not checked. One read-only `sts get-caller-identity` was invoked by mistake during the CI scan. Its output was discarded and not used.
+## What failed / not possible
+- Live access disabled (`live_access=off`): no STS, ElastiCache, Health or Trusted Advisor calls. Drift not checked.
 
-## Values not resolved
-- The `aws/redis` module has no callers or tfvars in this repository, so the deployed `redis_version`, `instance_type` and `num_cache_nodes` are unknown. Defaults were used.
-- Region: `var.region` has no value in the repository.
-- The newest Valkey 9.x in the Region was not confirmed (9.1 is taken from the docs). Whether cache.t2.micro is offered for Valkey was also not confirmed.
+## Values that couldn't be resolved
+- Callers of `aws/redis`: none in this repo, so `redis_version`, `region`, `instance_type` and `num_cache_nodes` come from defaults only (region has no default).
+- Newest Valkey version offered in the Region: taken from docs (9.1), not confirmed with DescribeCacheEngineVersions.
+- Whether cache.t2.micro is offered for Valkey in the target Region.
+
+## Notes
+- The only CI workflow (.github/workflows/ci.yaml) runs tflint only; no `terraform apply -auto-approve`.
+- No application code, client manifests or dev/test Redis images found.

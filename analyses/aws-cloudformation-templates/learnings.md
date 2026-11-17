@@ -1,17 +1,22 @@
-# Learnings: ElastiCache Redis OSS end-of-support analysis (2026-11-17)
+# Learnings: ElastiCache Redis OSS end-of-support analysis
+
+Run date: 2026-11-17 · Inputs: live_access=off, all others default.
 
 ## What worked
-- A case-insensitive repository search for `elasticache|redis` found every in-scope file: `ElastiCache/Elasticache-snapshot.yaml`, `ElastiCache/Elasticache-snapshot.json` and `ElastiCache/elastic-code.js`. No Terraform, CDK, docker-compose, Helm or Redis client manifests reference Redis.
-- Engine and version are literal values (`Engine: redis`, `EngineVersion: 2.8.24`). No parameter or mapping indirection had to be resolved.
-- The YAML and JSON templates describe the same stack in two formats. Each was reported as its own cache definition so a remediation edits both.
+- Repository scan found one stack defined twice: `ElastiCache/Elasticache-snapshot.yaml` and its JSON equivalent `ElastiCache/Elasticache-snapshot.json`. Each defines `RedisReplicationGroup` (redis 2.8.24), `RedisParameterGroup` (family redis2.8) and `RedisSubnetGroup`.
+- Engine and version are literal values (YAML lines 146-147, JSON lines 217-218), so nothing needed resolving through Parameters or Mappings.
+- Status comes from the AWS docs fallback: Redis OSS 2.x is past end of life (2023-01-13) and is not in the Extended Support schedule, so no cost was estimated.
 
-## What failed and why
-- No live data, AWS Health or Trusted Advisor data was read because `live_access=off`. Status comes from the AWS documentation (lifecycle reference) and the run date. Drift was not checked.
-- `.github/workflows/stale.yml` is tracked in git but missing from the working tree, so CI deployment practices couldn't be checked. No deploy pipeline was found, so no CI risk point was added.
+## What failed or was skipped, and why
+- No AWS calls were made because live_access=off: no STS identity, Health, Trusted Advisor, describe calls or DescribeCacheEngineVersions. As a result, drift was not checked and deployment state is unknown.
+- I did not use web access to re-check the lifecycle docs. Lifecycle dates and the 9.1 / 8.2 version strings come from the skill references.
 
-## Values not resolved
-- Region: the template uses `AWS::Region` with a mapping for us-east-1, us-west-1 and us-west-2. The deployed Region is unknown.
-- Whether a direct upgrade from Redis OSS 2.8.24 to Valkey is allowed. The AWS docs don't say. Confirm with `describe-cache-engine-versions` or AWS Support.
-- The newest Valkey versions in the Region (9.1 and 8.2 are taken from the docs) weren't confirmed with `DescribeCacheEngineVersions`.
-- Whether node type `cache.m3.medium` (previous generation, fixed by `AllowedValues`) supports the target engine. This needs verification.
-- Live replication group ID and account: not read.
+## Values I couldn't resolve
+- The live engine version and whether either template is deployed, and in which Region. The IaC mapping covers us-east-1, us-west-1 and us-west-2.
+- Whether a direct upgrade from 2.8.24 to Valkey is allowed. The docs don't say; confirm with `describe-cache-engine-versions` or AWS Support.
+- Whether `cache.m3.medium`, the only allowed node type, is offered for Valkey 9 / 8 / 7.2 or Redis OSS 7.1.
+
+## Notes for the remediation
+- Both templates must be changed together. The JSON file appears to be a rain-generated twin of the YAML (it uses `Rain::Embed`).
+- Blocker: `TransitEncryptionEnabled` is unset, but a Valkey replication group requires it. The customer must decide on TLS or pick Redis OSS 7.1.
+- `ElastiCache/elastic-code.js` is a control-plane Lambda (modifyReplicationGroup). It is not a Redis client, so no application signals were found.
